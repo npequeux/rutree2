@@ -139,6 +139,6 @@ Common outputs:
 ## Notes
 
 - The Android binary is standalone and has no external dependencies
-- File size is approximately 1.1 MB (stripped) or 1.1 MB (unstripped)
+- File size is approximately 1.1 MB (unstripped) or 732 KB (stripped)
 - Compatible with Android 5.0 (API level 21) and above
 - Works in both Termux and standard Android shell environments
