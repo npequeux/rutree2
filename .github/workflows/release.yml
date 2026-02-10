@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  
+
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Checkout code 
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Create Release
@@ -112,7 +112,7 @@ jobs:
 
           PACKAGE_NAME="rutree2-${{ matrix.asset_name_suffix }}"
           STAGING_DIR="staging"
-          
+
           mkdir "$STAGING_DIR"
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
@@ -120,7 +120,7 @@ jobs:
           else
             SOURCE_BINARY_PATH="target/${{ matrix.target }}/release/rutree2"
           fi
-          
+
           echo "Verifying binary exists at: ${SOURCE_BINARY_PATH}"
           if [ ! -f "$SOURCE_BINARY_PATH" ]; then
             echo "::error::Binary not found!"
@@ -130,7 +130,7 @@ jobs:
           cp "$SOURCE_BINARY_PATH" "$STAGING_DIR/"
           cp README.md "$STAGING_DIR/"
           cp LICENSE "$STAGING_DIR/" || echo "LICENSE file not found, skipping."
-          
+
           # Include Android documentation if this is an Android build
           if [[ "${{ matrix.is_android }}" == "true" ]]; then
             cp ANDROID.md "$STAGING_DIR/" || echo "ANDROID.md not found, skipping."
