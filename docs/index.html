@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rutree2 - Rust Directory Tree Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1f6feb 0%, #0969da 100%);
+            border-radius: 8px;
+        }
+        .header h1 {
+            margin: 0;
+            color: white;
+            font-size: 3em;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2em;
+        }
+        .markdown-body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+        .markdown-body a {
+            color: #58a6ff;
+        }
+        .markdown-body h1 {
+            display: none; /* Hide the README title since we have a header */
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #8b949e;
+            border-top: 1px solid #30363d;
+        }
+        .github-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #238636;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .github-link:hover {
+            background-color: #2ea043;
+        }
+        @media (prefers-color-scheme: light) {
+            body {
+                background-color: #ffffff;
+                color: #24292f;
+            }
+            .markdown-body {
+                background-color: #ffffff;
+                color: #24292f;
+            }
+            .header {
+                background: linear-gradient(135deg, #0969da 0%, #1f6feb 100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌲 rutree2</h1>
+            <p>A Rust command-line tool for displaying directory structures</p>
+        </div>
+        <div id="content" class="markdown-body">
+            Loading...
+        </div>
+        <div class="footer">
+            <a href="https://github.com/npequeux/rutree2" class="github-link">
+                View on GitHub
+            </a>
+            <p>Built with ❤️ using Rust</p>
+        </div>
+    </div>
+    <script>
+        // Fetch and render README.md
+        fetch('../README.md')
+            .then(response => response.text())
+            .then(markdown => {
+                const content = document.getElementById('content');
+                content.innerHTML = marked.parse(markdown);
+            })
+            .catch(error => {
+                console.error('Error loading README:', error);
+                document.getElementById('content').innerHTML = 
+                    '<p>Error loading README. Please visit the <a href="https://github.com/npequeux/rutree2">GitHub repository</a>.</p>';
+            });
+    </script>
+</body>
+</html>
