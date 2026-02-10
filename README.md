@@ -14,7 +14,24 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 
 ## Installation
 
-Build from source:
+### Pre-built Binaries
+
+Download pre-built binaries from the [Releases page](https://github.com/npequeux/rutree2/releases):
+
+**Desktop:**
+- Windows (x86_64)
+- Linux (x86_64)
+- macOS (x86_64 and ARM64)
+
+**Android:**
+- ARM64 (aarch64) - Most modern devices
+- ARMv7 - Older 32-bit ARM devices
+- x86_64 - 64-bit x86 emulators/devices
+- x86 - 32-bit x86 emulators/devices
+
+For Android usage instructions, see [ANDROID.md](ANDROID.md).
+
+### Build from source:
 ```bash
 cargo build --release
 ```
