@@ -60,9 +60,7 @@ fn display_tree(
             .filter_map(Result::ok)
             .filter(|entry| {
                 // Filter hidden files if needed
-                if !show_hidden
-                    && let Some(name) = entry.file_name().to_str()
-                {
+                if !show_hidden && let Some(name) = entry.file_name().to_str() {
                     return !name.starts_with('.');
                 }
                 true

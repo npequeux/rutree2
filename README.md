@@ -19,6 +19,24 @@ cargo build --release
 
 The binary will be available at `target/release/rutree2`.
 
+### Build Tasks
+
+This project uses [cargo-make](https://github.com/sagiegurari/cargo-make) for task automation. First, install cargo-make:
+
+```bash
+cargo install cargo-make
+```
+
+Available tasks:
+- `cargo make format` - Format code using rustfmt
+- `cargo make check` - Check code without building
+- `cargo make clippy` - Run clippy linter
+- `cargo make build` - Build the project (runs format first)
+- `cargo make build-release` - Build in release mode (runs format first)
+- `cargo make test` - Run tests (runs format first)
+- `cargo make clean` - Clean build artifacts
+- `cargo make all` - Run all tasks: format, check, clippy, build, and test
+
 ## Usage
 
 ```bash

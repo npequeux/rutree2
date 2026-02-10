@@ -1,0 +1,41 @@
+[tasks.format]
+description = "Format code using rustfmt"
+command = "cargo"
+args = ["fmt"]
+
+[tasks.clean]
+description = "Clean build artifacts"
+command = "cargo"
+args = ["clean"]
+
+[tasks.check]
+description = "Check code without building"
+command = "cargo"
+args = ["check"]
+
+[tasks.clippy]
+description = "Run clippy linter"
+command = "cargo"
+args = ["clippy", "--", "-D", "warnings"]
+
+[tasks.build]
+description = "Build the project"
+command = "cargo"
+args = ["build"]
+dependencies = ["format"]
+
+[tasks.build-release]
+description = "Build the project in release mode"
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["format"]
+
+[tasks.test]
+description = "Run tests"
+command = "cargo"
+args = ["test"]
+dependencies = ["format"]
+
+[tasks.all]
+description = "Run all tasks: format, check, clippy, build, and test"
+dependencies = ["format", "check", "clippy", "build", "test"]
