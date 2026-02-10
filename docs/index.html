@@ -188,12 +188,12 @@
             let html = markdown;
             
             // Code blocks (process first to protect their content)
-            html = html.replace(/```[\s\S]*?```/gim, (match) => {
-                return match.replace(/```(?:bash|[a-z]*)\n([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
-            });
+            // Match code blocks and convert directly
+            html = html.replace(/```(\w*)\n?([\s\S]*?)```/gim, '<pre><code>$2</code></pre>');
             
-            // Inline code (process before other inline formatting)
-            html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+            // Inline code (after code blocks to avoid conflicts)
+            // Use negative lookbehind/lookahead to avoid matching within already processed tags
+            html = html.replace(/(?<!<code>)`([^`]+)`(?!<\/code>)/gim, '<code>$1</code>');
             
             // Headers (process from h1 to h3 to avoid conflicts)
             html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
@@ -226,7 +226,9 @@
             // Paragraphs (wrap non-tag lines in <p> tags)
             html = html.split('\n\n').map(para => {
                 // Only wrap in <p> if not already a tag (h1-h6, ul, ol, li, p, pre)
-                if (!para.match(/^<(h[1-6]|ul|ol|li|p|pre)/)) {
+                // Trim to handle whitespace and check for opening tags
+                const trimmed = para.trim();
+                if (trimmed && !trimmed.match(/^<(h[1-6]|ul|ol|li|p|pre|code)/)) {
                     return '<p>' + para + '</p>';
                 }
                 return para;
