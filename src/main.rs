@@ -21,9 +21,9 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    
+
     match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             eprintln!("Error: {}", e);
             std::process::exit(1);
@@ -39,18 +39,15 @@ fn display_tree(
     current_depth: usize,
 ) -> std::io::Result<()> {
     // Check if we've reached max depth
-    if let Some(max) = max_depth {
-        if current_depth > max {
-            return Ok(());
-        }
+    if let Some(max) = max_depth
+        && current_depth > max
+    {
+        return Ok(());
     }
 
     // Get the file name
-    let name = path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or(".");
-    
+    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or(".");
+
     // Print current directory/file
     if current_depth == 0 {
         println!("{}", name);
@@ -63,10 +60,8 @@ fn display_tree(
             .filter_map(Result::ok)
             .filter(|entry| {
                 // Filter hidden files if needed
-                if !show_hidden {
-                    if let Some(name) = entry.file_name().to_str() {
-                        return !name.starts_with('.');
-                    }
+                if !show_hidden && let Some(name) = entry.file_name().to_str() {
+                    return !name.starts_with('.');
                 }
                 true
             })
@@ -79,7 +74,7 @@ fn display_tree(
         for (index, entry) in entries.iter().enumerate() {
             let path = entry.path();
             let is_last = index == total - 1;
-            
+
             let (connector, new_prefix) = if is_last {
                 ("└── ", format!("{}    ", prefix))
             } else {
@@ -88,7 +83,7 @@ fn display_tree(
 
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
-            
+
             // Add directory indicator
             let display_name = if path.is_dir() {
                 format!("{}/", name_str)
@@ -100,7 +95,13 @@ fn display_tree(
 
             // Recursively display subdirectories
             if path.is_dir() {
-                display_tree(&path, show_hidden, max_depth, &new_prefix, current_depth + 1)?;
+                display_tree(
+                    &path,
+                    show_hidden,
+                    max_depth,
+                    &new_prefix,
+                    current_depth + 1,
+                )?;
             }
         }
     }
