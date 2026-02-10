@@ -49,6 +49,26 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos-latest
             asset_name_suffix: "macos-arm64.tar.gz"
+          - target: aarch64-linux-android
+            os: ubuntu-latest
+            asset_name_suffix: "android-arm64.tar.gz"
+            is_android: true
+            ndk_target: arm64-v8a
+          - target: armv7-linux-androideabi
+            os: ubuntu-latest
+            asset_name_suffix: "android-armv7.tar.gz"
+            is_android: true
+            ndk_target: armeabi-v7a
+          - target: i686-linux-android
+            os: ubuntu-latest
+            asset_name_suffix: "android-x86.tar.gz"
+            is_android: true
+            ndk_target: x86
+          - target: x86_64-linux-android
+            os: ubuntu-latest
+            asset_name_suffix: "android-x86_64.tar.gz"
+            is_android: true
+            ndk_target: x86_64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -66,7 +86,23 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
+      - name: Setup Android NDK
+        if: matrix.is_android
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          add-to-path: true
+
+      - name: Install cargo-ndk for Android builds
+        if: matrix.is_android
+        run: cargo install cargo-ndk
+
+      - name: Build Android binary
+        if: matrix.is_android
+        run: cargo ndk -t ${{ matrix.ndk_target }} build --release
+
       - name: Build binary
+        if: ${{ !matrix.is_android }}
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Prepare package
@@ -94,6 +130,11 @@ jobs:
           cp "$SOURCE_BINARY_PATH" "$STAGING_DIR/"
           cp README.md "$STAGING_DIR/"
           cp LICENSE "$STAGING_DIR/" || echo "LICENSE file not found, skipping."
+          
+          # Include Android documentation if this is an Android build
+          if [[ "${{ matrix.is_android }}" == "true" ]]; then
+            cp ANDROID.md "$STAGING_DIR/" || echo "ANDROID.md not found, skipping."
+          fi
 
           echo "--- Contents of staging directory ---"
           ls -R "$STAGING_DIR"
