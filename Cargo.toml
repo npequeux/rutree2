@@ -6,7 +6,7 @@ description = "A Rust command-line tool inspired by lstree for displaying direct
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/npequeux/rutree2"
-homepage = "https://github.com/npequeux/rutree2"
+homepage = "https://npequeux.github.io/rutree2"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
