@@ -2,21 +2,53 @@
 
 This guide will get you started testing `rutree2` on your Android phone in just a few minutes.
 
-## Option A: Using Termux (Easiest - No Computer Required!)
+## Option A: Build from Source on Your Computer
+
+**Note:** Android binaries are not currently included in releases. You'll need to build from source.
+
+1. **Install prerequisites on your computer**:
+   ```bash
+   # Install cargo-ndk
+   cargo install cargo-ndk
+   
+   # Install Android targets
+   rustup target add aarch64-linux-android
+   ```
+
+2. **Build the binary** (on your computer):
+   ```bash
+   # Clone the repository
+   git clone https://github.com/npequeux/rutree2.git
+   cd rutree2
+   
+   # Build for Android ARM64 (most modern phones)
+   cargo ndk -t arm64-v8a build --release
+   ```
+
+3. **Transfer to your Android device** - See Option B or C below for transfer methods.
+
+## Option B: Using Termux (After Building)
+
+**Prerequisites:**
+- Connect your phone to your computer via USB
+- Enable USB debugging on your phone:
+  - Go to Settings → About Phone
+  - Tap "Build Number" 7 times to enable Developer Options
+  - Go to Settings → Developer Options
+  - Enable "USB Debugging"
 
 1. **Install Termux** on your Android device:
    - Download from [F-Droid](https://f-droid.org/packages/com.termux/) (recommended)
    - Or get it from Google Play Store
 
-2. **Download the pre-built binary**:
-   
-   In Termux, run:
+2. **Transfer and use**:
    ```bash
-   # Download the ARM64 binary (works on most modern phones)
-   curl -L -o rutree2 https://github.com/npequeux/rutree2/releases/download/latest/rutree2-android-arm64
+   # On your computer: transfer the binary
+   adb push target/aarch64-linux-android/release/rutree2 /sdcard/
    
-   # Make it executable
-   chmod +x rutree2
+   # In Termux on your phone
+   cp /sdcard/rutree2 ~/
+   chmod +x ~/rutree2
    
    # Test it
    ./rutree2
@@ -32,30 +64,6 @@ This guide will get you started testing `rutree2` on your Android phone in just 
    
    # Browse your downloads
    ./rutree2 /sdcard/Download
-   ```
-
-## Option B: Transfer from Computer (If you built it yourself)
-
-1. **Connect your phone** to your computer via USB
-
-2. **Enable USB debugging** on your phone:
-   - Go to Settings → About Phone
-   - Tap "Build Number" 7 times to enable Developer Options
-   - Go to Settings → Developer Options
-   - Enable "USB Debugging"
-
-3. **Transfer the binary**:
-   ```bash
-   # On your computer
-   adb push target/aarch64-linux-android/release/rutree2 /sdcard/
-   ```
-
-4. **Use it in Termux**:
-   ```bash
-   # In Termux on your phone
-   cp /sdcard/rutree2 ~/
-   chmod +x ~/rutree2
-   ./rutree2
    ```
 
 ## Option C: Direct Testing via ADB (No Termux needed)
@@ -102,6 +110,11 @@ Once installed, try these commands:
 ```
 
 ## Troubleshooting
+
+**"Not: command not found" error:**
+- This occurs if you tried to download a pre-built binary that doesn't exist
+- Android binaries are not currently included in releases
+- Solution: Build from source using Option A above
 
 **"Permission denied" error:**
 - Run: `chmod +x rutree2`
