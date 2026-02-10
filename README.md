@@ -14,6 +14,9 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 - [Android Build Guide](ANDROID.md) - Detailed Android build and installation instructions
 - [Quick Start (Android)](QUICKSTART-ANDROID.md) - Fast-track Android setup
 - [Testing Guide](TESTING.md) - Information about testing the project
+- [CI/CD Improvements](CI_IMPROVEMENTS.md) - Details about documentation publishing, lint checks, and workflows
+
+> **Note:** To enable documentation publishing, go to repository Settings → Pages → Source and select "GitHub Actions".
 
 ## Features
 
