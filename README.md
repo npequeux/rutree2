@@ -1,8 +1,19 @@
 # rutree2
 
+[![Rust CI](https://github.com/npequeux/rutree2/workflows/Rust%20CI/badge.svg)](https://github.com/npequeux/rutree2/actions/workflows/ci.yml)
+[![Documentation](https://github.com/npequeux/rutree2/workflows/Documentation/badge.svg)](https://github.com/npequeux/rutree2/actions/workflows/docs.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Rust command-line tool inspired by `lstree` for displaying directory structures in a tree format.
 
 **Now with Android support!** 📱 See [ANDROID.md](ANDROID.md) for build and installation instructions.
+
+## Documentation
+
+- [API Documentation](https://npequeux.github.io/rutree2/) - Rust API documentation (auto-generated)
+- [Android Build Guide](ANDROID.md) - Detailed Android build and installation instructions
+- [Quick Start (Android)](QUICKSTART-ANDROID.md) - Fast-track Android setup
+- [Testing Guide](TESTING.md) - Information about testing the project
 
 ## Features
 
@@ -33,9 +44,13 @@ Available tasks:
 - `cargo make format` - Format code using rustfmt
 - `cargo make check` - Check code without building
 - `cargo make clippy` - Run clippy linter
+- `cargo make lint` - Run all linting tasks (format + clippy)
 - `cargo make build` - Build the project (runs format first)
 - `cargo make build-release` - Build in release mode (runs format first)
 - `cargo make test` - Run tests (runs format first)
+- `cargo make doc` - Generate documentation
+- `cargo make doc-open` - Generate and open documentation in browser
+- `cargo make audit` - Run security audit (requires cargo-audit)
 - `cargo make clean` - Clean build artifacts
 - `cargo make all` - Run all tasks: format, check, clippy, build, and test
 

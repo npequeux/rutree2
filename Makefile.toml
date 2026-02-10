@@ -57,3 +57,22 @@ description = "Install Android target architectures"
 script = '''
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 '''
+
+[tasks.doc]
+description = "Generate documentation"
+command = "cargo"
+args = ["doc", "--no-deps"]
+
+[tasks.doc-open]
+description = "Generate and open documentation in browser"
+command = "cargo"
+args = ["doc", "--no-deps", "--open"]
+
+[tasks.audit]
+description = "Run security audit"
+command = "cargo"
+args = ["audit"]
+
+[tasks.lint]
+description = "Run all linting tasks"
+dependencies = ["format", "clippy"]

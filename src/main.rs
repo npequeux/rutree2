@@ -1,7 +1,36 @@
+//! # rutree2
+//!
+//! A Rust command-line tool for displaying directory structures in a tree format.
+//!
+//! ## Features
+//!
+//! - Display directory trees with proper indentation and tree characters
+//! - Show hidden files with the `-a` or `--all` flag
+//! - Limit traversal depth with the `-d` or `--depth` option
+//! - Sort entries alphabetically
+//! - Clean, readable output with visual tree structure
+//!
+//! ## Usage
+//!
+//! ```bash
+//! # Display the current directory
+//! rutree2
+//!
+//! # Display a specific directory
+//! rutree2 /path/to/directory
+//!
+//! # Show hidden files
+//! rutree2 --all
+//!
+//! # Limit depth to 2 levels
+//! rutree2 --depth 2
+//! ```
+
 use clap::Parser;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Command-line interface configuration for rutree2
 #[derive(Parser)]
 #[command(name = "rutree2")]
 #[command(about = "Display directory tree structure", long_about = None)]
@@ -19,6 +48,9 @@ struct Cli {
     depth: Option<usize>,
 }
 
+/// Main entry point for the rutree2 application.
+///
+/// Parses command-line arguments and initiates the directory tree display.
 fn main() {
     let cli = Cli::parse();
 
@@ -31,6 +63,28 @@ fn main() {
     }
 }
 
+/// Recursively displays a directory tree structure.
+///
+/// # Arguments
+///
+/// * `path` - The path to display
+/// * `show_hidden` - Whether to show hidden files (starting with '.')
+/// * `max_depth` - Maximum depth to traverse (None for unlimited)
+/// * `prefix` - The prefix string for tree formatting
+/// * `current_depth` - The current depth in the traversal
+///
+/// # Returns
+///
+/// Returns `Ok(())` on success, or an `std::io::Error` if directory reading fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::path::Path;
+/// # fn display_tree(path: &Path, show_hidden: bool, max_depth: Option<usize>, prefix: &str, current_depth: usize) -> std::io::Result<()> { Ok(()) }
+/// let path = Path::new(".");
+/// display_tree(&path, false, Some(2), "", 0).unwrap();
+/// ```
 fn display_tree(
     path: &Path,
     show_hidden: bool,
