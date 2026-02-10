@@ -187,23 +187,24 @@
         function parseMarkdown(markdown) {
             let html = markdown;
             
-            // Headers
-            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            // Code blocks (process first to protect their content)
+            html = html.replace(/```[\s\S]*?```/gim, (match) => {
+                return match.replace(/```(?:bash|[a-z]*)\n([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
+            });
+            
+            // Inline code (process before other inline formatting)
+            html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+            
+            // Headers (process from h1 to h3 to avoid conflicts)
             html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
             
             // Bold
             html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
             
             // Links
             html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>');
-            
-            // Code blocks
-            html = html.replace(/```bash\n([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
-            html = html.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
-            
-            // Inline code
-            html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
             
             // Lists
             html = html.split('\n').map((line, i, arr) => {
@@ -222,9 +223,10 @@
                 return line;
             }).join('\n');
             
-            // Paragraphs
+            // Paragraphs (wrap non-tag lines in <p> tags)
             html = html.split('\n\n').map(para => {
-                if (!para.match(/^<[hupol]/)) {
+                // Only wrap in <p> if not already a tag (h1-h6, ul, ol, li, p, pre)
+                if (!para.match(/^<(h[1-6]|ul|ol|li|p|pre)/)) {
                     return '<p>' + para + '</p>';
                 }
                 return para;
