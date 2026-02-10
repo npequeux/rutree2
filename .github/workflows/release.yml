@@ -93,9 +93,16 @@ jobs:
           ndk-version: r26d
           add-to-path: true
 
+      - name: Cache cargo-ndk
+        if: matrix.is_android
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-ndk
+          key: ${{ runner.os }}-cargo-ndk
+
       - name: Install cargo-ndk for Android builds
         if: matrix.is_android
-        run: cargo install cargo-ndk
+        run: cargo install cargo-ndk --locked || echo "cargo-ndk already installed"
 
       - name: Build Android binary
         if: matrix.is_android
