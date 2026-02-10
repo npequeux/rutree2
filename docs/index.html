@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>rutree2 - Rust Directory Tree Tool</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #0d1117;
             color: #c9d1d9;
+            line-height: 1.6;
         }
         .container {
             max-width: 980px;
@@ -22,7 +24,7 @@
         .header {
             text-align: center;
             margin-bottom: 40px;
-            padding: 20px;
+            padding: 30px;
             background: linear-gradient(135deg, #1f6feb 0%, #0969da 100%);
             border-radius: 8px;
         }
@@ -33,22 +35,80 @@
             font-weight: 700;
         }
         .header p {
-            margin: 10px 0 0;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2em;
+            margin: 15px 0 0;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1.3em;
         }
-        .markdown-body {
-            background-color: #0d1117;
+        .content {
+            background-color: #161b22;
             color: #c9d1d9;
-            padding: 30px;
+            padding: 40px;
             border-radius: 8px;
             border: 1px solid #30363d;
         }
-        .markdown-body a {
-            color: #58a6ff;
+        .content h1:first-child {
+            display: none;
         }
-        .markdown-body h1 {
-            display: none; /* Hide the README title since we have a header */
+        .content h2 {
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+        .content h3 {
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 1.25em;
+            font-weight: 600;
+        }
+        .content a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .content a:hover {
+            text-decoration: underline;
+        }
+        .content p {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .content ul, .content ol {
+            margin-top: 0;
+            margin-bottom: 16px;
+            padding-left: 2em;
+        }
+        .content li {
+            margin-bottom: 8px;
+        }
+        .content code {
+            background-color: rgba(110, 118, 129, 0.4);
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+            font-size: 85%;
+        }
+        .content pre {
+            background-color: #0d1117;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+        .content pre code {
+            background-color: transparent;
+            padding: 0;
+            font-size: 85%;
+        }
+        .content strong {
+            font-weight: 600;
+        }
+        .content hr {
+            border: 0;
+            border-top: 1px solid #30363d;
+            margin: 24px 0;
         }
         .footer {
             text-align: center;
@@ -60,27 +120,48 @@
         .github-link {
             display: inline-block;
             margin-top: 20px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #238636;
-            color: white;
+            color: white !important;
             text-decoration: none;
             border-radius: 6px;
             font-weight: 600;
+            transition: background-color 0.2s;
         }
         .github-link:hover {
             background-color: #2ea043;
+            text-decoration: none;
         }
         @media (prefers-color-scheme: light) {
             body {
                 background-color: #ffffff;
                 color: #24292f;
             }
-            .markdown-body {
+            .content {
                 background-color: #ffffff;
                 color: #24292f;
+                border-color: #d0d7de;
             }
-            .header {
-                background: linear-gradient(135deg, #0969da 0%, #1f6feb 100%);
+            .content h2 {
+                border-bottom-color: #d0d7de;
+                color: #24292f;
+            }
+            .content a {
+                color: #0969da;
+            }
+            .content code {
+                background-color: rgba(175, 184, 193, 0.2);
+            }
+            .content pre {
+                background-color: #f6f8fa;
+                border-color: #d0d7de;
+            }
+            .content hr {
+                border-top-color: #d0d7de;
+            }
+            .footer {
+                border-top-color: #d0d7de;
+                color: #57606a;
             }
         }
     </style>
@@ -91,7 +172,7 @@
             <h1>🌲 rutree2</h1>
             <p>A Rust command-line tool for displaying directory structures</p>
         </div>
-        <div id="content" class="markdown-body">
+        <div id="content" class="content">
             Loading...
         </div>
         <div class="footer">
@@ -102,12 +183,67 @@
         </div>
     </div>
     <script>
+        // Simple markdown parser
+        function parseMarkdown(markdown) {
+            let html = markdown;
+            
+            // Headers
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            
+            // Bold
+            html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+            
+            // Links
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>');
+            
+            // Code blocks
+            html = html.replace(/```bash\n([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
+            html = html.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
+            
+            // Inline code
+            html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+            
+            // Lists
+            html = html.split('\n').map((line, i, arr) => {
+                if (line.match(/^- /)) {
+                    const item = line.replace(/^- /, '<li>') + '</li>';
+                    const prevLine = arr[i - 1] || '';
+                    const nextLine = arr[i + 1] || '';
+                    
+                    if (!prevLine.match(/^- /)) {
+                        return '<ul>' + item;
+                    } else if (!nextLine.match(/^- /)) {
+                        return item + '</ul>';
+                    }
+                    return item;
+                }
+                return line;
+            }).join('\n');
+            
+            // Paragraphs
+            html = html.split('\n\n').map(para => {
+                if (!para.match(/^<[hupol]/)) {
+                    return '<p>' + para + '</p>';
+                }
+                return para;
+            }).join('\n');
+            
+            return html;
+        }
+        
         // Fetch and render README.md
-        fetch('../README.md')
-            .then(response => response.text())
+        fetch('README.md')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch README');
+                }
+                return response.text();
+            })
             .then(markdown => {
                 const content = document.getElementById('content');
-                content.innerHTML = marked.parse(markdown);
+                content.innerHTML = parseMarkdown(markdown);
             })
             .catch(error => {
                 console.error('Error loading README:', error);
