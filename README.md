@@ -14,12 +14,48 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 
 ## Installation
 
-Build from source:
+### Download Pre-built Binaries
+
+Pre-built binaries are available for multiple platforms:
+
+- **[Latest Release](https://github.com/npequeux/rutree2/releases/latest)** - Download the latest stable release
+- **[All Releases](https://github.com/npequeux/rutree2/releases)** - Browse all available releases
+
+Available platforms:
+- **Windows** (x86_64): `rutree2-windows-x86_64.zip`
+- **Linux** (x86_64): `rutree2-linux-x86_64.tar.gz`
+- **macOS** (x86_64 Intel): `rutree2-macos-x86_64.tar.gz`
+- **macOS** (ARM64 Apple Silicon): `rutree2-macos-arm64.tar.gz`
+
+### Build from Source
+
 ```bash
 cargo build --release
 ```
 
 The binary will be available at `target/release/rutree2`.
+
+### CI Artifacts
+
+Development builds are automatically created for every commit and pull request:
+
+- **[CI Workflow Runs](https://github.com/npequeux/rutree2/actions/workflows/ci.yml)** - View test results and download artifacts from CI builds
+- **[All Actions](https://github.com/npequeux/rutree2/actions)** - Browse all workflow runs
+
+CI builds are created for:
+- Ubuntu Linux
+- macOS (Intel and ARM)
+- Windows
+
+### Android Builds
+
+For Android devices, see [ANDROID.md](ANDROID.md) for detailed build and installation instructions.
+
+After building for Android, binaries are available at:
+- ARM64 (most modern devices): `target/aarch64-linux-android/release/rutree2`
+- ARMv7 (older devices): `target/armv7-linux-androideabi/release/rutree2`
+- x86_64 (emulators): `target/x86_64-linux-android/release/rutree2`
+- x86 (older emulators): `target/i686-linux-android/release/rutree2`
 
 ### Build Tasks
 
