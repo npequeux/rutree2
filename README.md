@@ -2,6 +2,8 @@
 
 A Rust command-line tool inspired by `lstree` for displaying directory structures in a tree format.
 
+**Now with Android support!** 📱 See [ANDROID.md](ANDROID.md) for build and installation instructions.
+
 ## Features
 
 - Display directory trees with proper indentation and tree characters
@@ -36,6 +38,13 @@ Available tasks:
 - `cargo make test` - Run tests (runs format first)
 - `cargo make clean` - Clean build artifacts
 - `cargo make all` - Run all tasks: format, check, clippy, build, and test
+
+**Android Build Tasks:**
+- `cargo make install-android-targets` - Install Android target architectures
+- `cargo make build-android` - Build for all Android architectures
+- `cargo make build-android-arm64` - Build for ARM64 Android devices (most common)
+
+See [ANDROID.md](ANDROID.md) for detailed Android build and installation instructions.
 
 ## Usage
 
