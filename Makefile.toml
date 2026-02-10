@@ -39,3 +39,21 @@ dependencies = ["format"]
 [tasks.all]
 description = "Run all tasks: format, check, clippy, build, and test"
 dependencies = ["format", "check", "clippy", "build", "test"]
+
+[tasks.build-android]
+description = "Build for Android (all architectures)"
+script = '''
+cargo ndk -t arm64-v8a -t armeabi-v7a -t x86 -t x86_64 build --release
+'''
+
+[tasks.build-android-arm64]
+description = "Build for Android arm64-v8a (most modern devices)"
+script = '''
+cargo ndk -t arm64-v8a build --release
+'''
+
+[tasks.install-android-targets]
+description = "Install Android target architectures"
+script = '''
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+'''
