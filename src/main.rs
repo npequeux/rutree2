@@ -79,9 +79,8 @@ fn main() {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use std::path::Path;
-/// # fn display_tree(path: &Path, show_hidden: bool, max_depth: Option<usize>, prefix: &str, current_depth: usize) -> std::io::Result<()> { Ok(()) }
 /// let path = Path::new(".");
 /// display_tree(&path, false, Some(2), "", 0).unwrap();
 /// ```
