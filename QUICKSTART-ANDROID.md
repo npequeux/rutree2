@@ -11,11 +11,17 @@ This guide will get you started testing `rutree2` on your Android phone in just 
    In Termux or via browser, download:
    ```bash
    # For ARM64 devices (most modern phones from 2016+)
-   curl -L -f -o rutree2-android-arm64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || { echo "Error: Download failed. The release may not exist yet. Please check https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
+   curl -L -f -o rutree2-android-arm64.tar.gz \
+     https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || \
+     { echo "Error: Download failed. The release may not exist yet."; \
+       echo "Please check https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
    tar -xzf rutree2-android-arm64.tar.gz
    
    # OR for ARMv7 devices (older phones)
-   curl -L -f -o rutree2-android-armv7.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz || { echo "Error: Download failed. The release may not exist yet. Please check https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
+   curl -L -f -o rutree2-android-armv7.tar.gz \
+     https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz || \
+     { echo "Error: Download failed. The release may not exist yet."; \
+       echo "Please check https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
    tar -xzf rutree2-android-armv7.tar.gz
    ```
 
