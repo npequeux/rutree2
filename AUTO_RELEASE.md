@@ -42,12 +42,27 @@ If no label is specified, a **patch** version bump is applied by default.
 
 ## Manual Releases
 
-You can also trigger a release manually without closing an issue:
+### Option 1: Manual Auto-Release (Creates New Version)
 
-1. Go to the [Actions tab](https://github.com/npequeux/rutree2/actions/workflows/auto-release.yml)
+You can trigger the auto-release workflow manually to create a new version:
+
+1. Go to the [Auto Release workflow](https://github.com/npequeux/rutree2/actions/workflows/auto-release.yml)
 2. Click "Run workflow"
 3. Enter the issue number and select the version bump type
 4. Click "Run workflow"
+
+This will bump the version, update Cargo.toml and CHANGELOG.md, create a tag, and trigger the release build.
+
+### Option 2: Manual Release Build (For Existing Tag)
+
+If you already have a tag and just want to rebuild/republish the release:
+
+1. Go to the [Release workflow](https://github.com/npequeux/rutree2/actions/workflows/release.yml)
+2. Click "Run workflow"
+3. Select the branch (usually main)
+4. Click "Run workflow"
+
+This will create a release for the latest existing tag without creating a new version.
 
 ## Workflow File
 
