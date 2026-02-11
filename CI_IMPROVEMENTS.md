@@ -9,6 +9,7 @@ The following enhancements have been made:
 - Enhanced CI/CD workflows with better organization and security checks
 - Automated dependency management with Dependabot
 - New build tasks for documentation and linting
+- Archive validation in release workflow to ensure integrity before deployment
 
 ## Documentation Publishing
 
@@ -137,10 +138,42 @@ Push to Main/Tag
     │   ├─→ Security Job (cargo audit)
     │   └─→ Test Job (multi-platform tests & builds)
     │
-    └─→ Documentation Workflow
-        ├─→ Build Docs (cargo doc)
-        └─→ Deploy to GitHub Pages
+    ├─→ Documentation Workflow
+    │   ├─→ Build Docs (cargo doc)
+    │   └─→ Deploy to GitHub Pages
+    │
+    └─→ Release Workflow (on version tags)
+        ├─→ Create Release
+        └─→ Build and Upload Binaries
+            ├─→ Build for each platform
+            ├─→ Package into archives
+            ├─→ Validate Archive Integrity ✨
+            └─→ Upload to Release
 ```
+
+## Archive Validation in Release Workflow
+
+The release workflow now includes automatic validation of all generated archives before they are uploaded. This prevents deployment of corrupted or invalid archives.
+
+**Validation Steps:**
+1. **File Existence Check**: Verifies the archive file was created
+2. **Size Check**: Ensures the archive is not empty
+3. **Format Validation**:
+   - For tar.gz files: Uses `gzip -t` to verify valid gzip format
+   - For zip files: Uses `7z t` to verify valid zip format
+4. **Structure Validation**: Tests that the archive can be listed/extracted
+5. **Content Verification**: Confirms expected files (binary, README.md) are present
+6. **Extraction Test**: Actually extracts the archive to verify it works correctly
+7. **Binary Check**: Verifies the binary is executable (on Unix-like systems)
+
+**Benefits:**
+- Catches corrupted archives before deployment
+- Prevents "not gzip" or similar extraction errors for users
+- Provides clear error messages if validation fails
+- Ensures consistent archive quality across all platforms
+
+**Behavior on Failure:**
+If validation fails, the workflow stops and the archive is not uploaded. The error is clearly reported in the workflow logs with details about which validation step failed.
 
 ## Maintenance
 
