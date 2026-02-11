@@ -1,13 +1,13 @@
-# Release Instructions for v0.1.0
+# Release Instructions for v1.0.0
 
-This document contains the steps to complete the first release of rutree2.
+This document contains the steps to complete the v1.0.0 release of rutree2.
 
 ## Prerequisites
 
 The following have been completed:
 - ✅ Code has been tested and builds successfully
-- ✅ CHANGELOG.md has been created
-- ✅ Git tag v0.1.0 has been created locally
+- ✅ CHANGELOG.md has been updated
+- ✅ Git tag v1.0.0 has been created locally
 
 ## Steps to Complete the Release
 
@@ -17,7 +17,7 @@ The repository has an automated release workflow that will trigger when you push
 
 ```bash
 # Push the tag to GitHub
-git push origin v0.1.0
+git push origin v1.0.0
 ```
 
 This will automatically:
@@ -39,8 +39,8 @@ This will automatically:
 If you prefer to create the release manually:
 
 1. Go to https://github.com/npequeux/rutree2/releases/new
-2. Select or create tag: `v0.1.0`
-3. Release title: `Release v0.1.0`
+2. Select or create tag: `v1.0.0`
+3. Release title: `Release v1.0.0`
 4. Description: Copy the content from the "Release Notes" section below
 5. Click "Publish release"
 
@@ -51,9 +51,9 @@ Note: If using this option, the automated build workflow will still run and atta
 Use the following for the GitHub release description:
 
 ```markdown
-# rutree2 v0.1.0 - Initial Release
+# rutree2 v1.0.0 - Stable Release
 
-This is the first official release of rutree2, a Rust command-line tool for displaying directory structures in a tree format.
+This is the first stable release of rutree2, a Rust command-line tool for displaying directory structures in a tree format.
 
 ## Features
 
@@ -105,14 +105,14 @@ rutree2 --all --depth 1 /path/to/directory
 
 ## Full Changelog
 
-See [CHANGELOG.md](https://github.com/npequeux/rutree2/blob/v0.1.0/CHANGELOG.md) for complete details.
+See [CHANGELOG.md](https://github.com/npequeux/rutree2/blob/v1.0.0/CHANGELOG.md) for complete details.
 ```
 
 ## Verification
 
 After the release is published, verify:
 
-1. The release appears at: https://github.com/npequeux/rutree2/releases/tag/v0.1.0
+1. The release appears at: https://github.com/npequeux/rutree2/releases/tag/v1.0.0
 2. All platform binaries are attached as assets
 3. The README.md links to the release work correctly
 
@@ -121,4 +121,4 @@ After the release is published, verify:
 After the release is published:
 - Share the release announcement
 - Update any documentation that references version numbers
-- Plan for the next release (v0.2.0)
+- Plan for the next release (v1.1.0)
