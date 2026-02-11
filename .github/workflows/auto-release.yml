@@ -178,12 +178,12 @@ jobs:
         run: |
           git add Cargo.toml CHANGELOG.md
           git commit -m "Release v${{ steps.version.outputs.new_version }} - Issue #${{ github.event.issue.number || github.event.inputs.issue_number }}"
-          git push origin ${{ github.ref_name }}
+          git push origin HEAD:refs/heads/${{ github.ref_name }}
 
       - name: Create and Push Tag
         run: |
           git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }} - Issue #${{ github.event.issue.number || github.event.inputs.issue_number }}: ${{ github.event.issue.title || 'Manual release' }}"
-          git push origin "v${{ steps.version.outputs.new_version }}"
+          git push origin "refs/tags/v${{ steps.version.outputs.new_version }}"
 
       - name: Add Comment to Issue
         if: github.event_name == 'issues'
