@@ -5,6 +5,7 @@
 //! ## Features
 //!
 //! - Display directory trees with proper indentation and tree characters
+//! - Visualize symbolic links with `->` indicator showing both origin and destination
 //! - Show hidden files with the `-a` or `--all` flag
 //! - Limit traversal depth with the `-d` or `--depth` option
 //! - Sort entries alphabetically
