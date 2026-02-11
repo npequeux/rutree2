@@ -179,9 +179,21 @@ jobs:
           else
             echo "Validating tar.gz archive..."
 
+            # Check file type
+            FILE_TYPE=$(file "$PACKAGE_NAME")
+            echo "File type: $FILE_TYPE"
+            
+            if ! echo "$FILE_TYPE" | grep -q "gzip compressed data"; then
+              echo "::error::Archive is not a gzip file (file type check failed)"
+              echo "::error::Expected 'gzip compressed data' but got: $FILE_TYPE"
+              exit 1
+            fi
+
+            echo "✓ File type check passed (gzip compressed data)"
+
             # Test if it's a valid gzip file
             if ! gzip -t "$PACKAGE_NAME"; then
-              echo "::error::Archive is not a valid gzip file"
+              echo "::error::Archive is not a valid gzip file (gzip -t failed)"
               exit 1
             fi
 
@@ -212,6 +224,7 @@ jobs:
 
             # Extract to a test directory to ensure extraction works
             TEST_DIR=$(mktemp -d)
+            echo "Extracting archive to test directory: $TEST_DIR"
             if ! tar -xzf "$PACKAGE_NAME" -C "$TEST_DIR"; then
               echo "::error::Failed to extract archive"
               rm -rf "$TEST_DIR"
@@ -220,15 +233,37 @@ jobs:
 
             echo "✓ Archive extracts successfully"
 
-            # Verify binary is executable
-            if [ -f "$TEST_DIR/rutree2" ]; then
-              if [ ! -x "$TEST_DIR/rutree2" ]; then
-                echo "::warning::Binary is not executable"
-              else
-                echo "✓ Binary is executable"
-              fi
+            # List extracted files for debugging
+            echo "Extracted files:"
+            ls -lah "$TEST_DIR"
+
+            # Verify binary exists and is executable
+            if [ ! -f "$TEST_DIR/rutree2" ]; then
+              echo "::error::Binary file 'rutree2' not found in extracted archive"
+              rm -rf "$TEST_DIR"
+              exit 1
+            fi
+
+            echo "✓ Binary file exists in extracted archive"
+
+            if [ ! -x "$TEST_DIR/rutree2" ]; then
+              echo "::error::Binary is not executable"
+              rm -rf "$TEST_DIR"
+              exit 1
+            fi
+
+            echo "✓ Binary is executable"
+
+            # Test binary can be invoked (version check)
+            if "$TEST_DIR/rutree2" --version 2>&1 | grep -q "rutree"; then
+              echo "✓ Binary runs and reports version"
             else
-              echo "::warning::Binary file not found at expected location for executable check"
+              # Try with --help instead
+              if "$TEST_DIR/rutree2" --help 2>&1 | head -1 | grep -q "rutree"; then
+                echo "✓ Binary runs (--help works)"
+              else
+                echo "::warning::Binary executes but output verification inconclusive"
+              fi
             fi
 
             # Clean up test directory
