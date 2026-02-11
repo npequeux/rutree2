@@ -220,13 +220,15 @@ jobs:
 
             echo "✓ Archive extracts successfully"
 
-            # Verify binary is executable (not on Windows)
+            # Verify binary is executable
             if [ -f "$TEST_DIR/rutree2" ]; then
               if [ ! -x "$TEST_DIR/rutree2" ]; then
                 echo "::warning::Binary is not executable"
               else
                 echo "✓ Binary is executable"
               fi
+            else
+              echo "::warning::Binary file not found at expected location for executable check"
             fi
 
             # Clean up test directory
