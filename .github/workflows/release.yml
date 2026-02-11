@@ -341,14 +341,19 @@ jobs:
             echo "✓ Binary is executable"
 
             # Test binary can be invoked (basic functionality test)
-            echo "Testing binary execution..."
-            if "$TEST_DIR/rutree2" --help 2>&1 | grep -q "rutree2"; then
-              echo "✓ Binary runs and shows help"
+            # Skip execution test for Android targets (cross-compiled, can't run on x86_64 host)
+            if [[ "${{ matrix.target }}" == *"android"* ]]; then
+              echo "⊘ Skipping binary execution test for Android target (cross-compiled)"
             else
-              echo "::error::Binary does not execute correctly or produce expected output"
-              echo "::error::Binary should respond to --help flag and mention 'rutree2'"
-              rm -rf "$TEST_DIR"
-              exit 1
+              echo "Testing binary execution..."
+              if "$TEST_DIR/rutree2" --help 2>&1 | grep -q "rutree2"; then
+                echo "✓ Binary runs and shows help"
+              else
+                echo "::error::Binary does not execute correctly or produce expected output"
+                echo "::error::Binary should respond to --help flag and mention 'rutree2'"
+                rm -rf "$TEST_DIR"
+                exit 1
+              fi
             fi
 
             # Clean up test directory
