@@ -144,7 +144,15 @@ jobs:
           echo "✓ Archive file exists"
 
           # Check if archive is not empty
-          FILESIZE=$(stat -c%s "$PACKAGE_NAME" 2>/dev/null || stat -f%z "$PACKAGE_NAME" 2>/dev/null || echo "0")
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            FILESIZE=$(stat -c%s "$PACKAGE_NAME")
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            FILESIZE=$(stat -f%z "$PACKAGE_NAME")
+          else
+            # Windows - use PowerShell
+            FILESIZE=$(powershell -command "(Get-Item '$PACKAGE_NAME').Length")
+          fi
+
           if [ "$FILESIZE" -eq 0 ]; then
             echo "::error::Archive file is empty"
             exit 1
@@ -152,7 +160,7 @@ jobs:
 
           echo "✓ Archive file is not empty (size: ${FILESIZE} bytes)"
 
-          # Skip validation for Windows zip files
+          # Validate based on OS
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             echo "Validating zip archive..."
 
@@ -191,10 +199,10 @@ jobs:
             echo "Archive contents:"
             tar -tzf "$PACKAGE_NAME"
 
-            # Verify expected files are present
-            EXPECTED_FILES=("rutree2" "README.md")
+            # Verify expected files are present (exact path matches)
+            EXPECTED_FILES=("./rutree2" "./README.md")
             for file in "${EXPECTED_FILES[@]}"; do
-              if ! tar -tzf "$PACKAGE_NAME" | grep -q "$file"; then
+              if ! tar -tzf "$PACKAGE_NAME" | grep -qxF "$file"; then
                 echo "::error::Expected file '$file' not found in archive"
                 exit 1
               fi
@@ -203,8 +211,7 @@ jobs:
             echo "✓ All expected files present in archive"
 
             # Extract to a test directory to ensure extraction works
-            TEST_DIR="test_extract_$$"
-            mkdir -p "$TEST_DIR"
+            TEST_DIR=$(mktemp -d)
             if ! tar -xzf "$PACKAGE_NAME" -C "$TEST_DIR"; then
               echo "::error::Failed to extract archive"
               rm -rf "$TEST_DIR"
