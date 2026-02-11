@@ -26,7 +26,13 @@ This will automatically:
    - Windows (x86_64)
    - Linux (x86_64, static musl build)
    - macOS (x86_64 Intel and ARM64 Apple Silicon)
-3. Upload the binaries as release assets
+   - Android (ARM64, ARMv7)
+3. Validate each archive to ensure integrity:
+   - Verify the archive file exists and is not empty
+   - Test that the archive is a valid gzip (or zip for Windows)
+   - Verify the archive can be extracted successfully
+   - Confirm expected files (binary, README.md) are present
+4. Upload the binaries as release assets
 
 ### Option 2: Manual Release via GitHub UI
 
