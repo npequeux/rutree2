@@ -73,6 +73,8 @@ CI builds are created for:
 
 **Pre-built Android binaries are now available in releases!** Download them directly from the [latest release](https://github.com/npequeux/rutree2/releases/latest).
 
+> **Note:** If you encounter a 404 error when downloading, it means no release has been published yet. In that case, please build from source using the instructions in [QUICKSTART-ANDROID.md](QUICKSTART-ANDROID.md) Option B or [ANDROID.md](ANDROID.md).
+
 For detailed Android installation instructions, see [QUICKSTART-ANDROID.md](QUICKSTART-ANDROID.md) for the quickest setup, or [ANDROID.md](ANDROID.md) for comprehensive build and installation instructions.
 
 Available Android binaries in releases:

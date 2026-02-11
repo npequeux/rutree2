@@ -15,15 +15,28 @@ All preparations for the v1.0.0 stable release of rutree2 have been completed.
 
 ## What You Need to Do
 
-### Push the Tag to Create the Release
+### Create and Push the Tag to Create the Release
 
-Simply run this command to trigger the automated release:
+Run these commands to create the tag and trigger the automated release:
 
 ```bash
+# Create an annotated tag for v1.0.0
+git tag -a v1.0.0 -m "Release v1.0.0
+
+First stable release of rutree2.
+
+Features:
+- Display directory structures in a tree format
+- Support for multiple platforms (Linux, macOS, Windows, Android)
+- Customizable depth limiting
+- Hidden file display options
+- Colorized output"
+
+# Push the tag to GitHub (this triggers the release workflow)
 git push origin v1.0.0
 ```
 
-That's it! This single command will:
+That's it! These commands will:
 1. ✨ Create a GitHub release for v1.0.0
 2. 🔨 Automatically build binaries for:
    - Windows (x86_64)
@@ -33,6 +46,8 @@ That's it! This single command will:
    - Android (ARM64, ARMv7)
 3. 📦 Upload all binaries as release assets
 4. 📝 Make the release available at: https://github.com/npequeux/rutree2/releases/tag/v1.0.0
+
+**Note:** The tag has been created locally in this branch. When this PR is merged, the maintainer should create and push the tag from the main branch.
 
 ## After the Release
 
