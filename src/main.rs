@@ -9,7 +9,14 @@
 //! - Show hidden files with the `-a` or `--all` flag
 //! - Limit traversal depth with the `-d` or `--depth` option
 //! - Sort entries alphabetically
-//! - Color-coded output based on file types and permissions
+//! - Enhanced color-coded output based on file types and permissions:
+//!   - Setuid/setgid files (security sensitive)
+//!   - Sticky bit directories
+//!   - Executable files
+//!   - World-writable files
+//!   - Directories and symbolic links
+//!   - Archive, image, and audio/video files
+//!   - Special files (devices, sockets, pipes)
 //! - Clean, readable output with visual tree structure
 //!
 //! ## Usage
@@ -225,9 +232,16 @@ fn display_tree(
 ///
 /// A colored string based on file type and permissions:
 /// - Directories: Blue and bold
+/// - Setuid files: White on red (security sensitive)
+/// - Setgid files: Black on yellow (security sensitive)
+/// - Sticky bit directories: Green on blue
 /// - Executable files: Green
-/// - Writable by others (o+w): Yellow (warning)
+/// - World-writable files: Yellow (warning)
 /// - Symlinks: Cyan
+/// - Archive files: Red
+/// - Image files: Magenta
+/// - Audio/video files: Bright magenta
+/// - Special files (devices, sockets, pipes): Yellow bold
 /// - Default: No color
 fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     // Check if it's a symlink first (using symlink_metadata to avoid following the link)
@@ -247,6 +261,14 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
 
     // Check if it's a directory
     if metadata.is_dir() {
+        #[cfg(unix)]
+        {
+            let mode = metadata.permissions().mode();
+            // Check for sticky bit (0o1000) on directories
+            if mode & 0o1000 != 0 {
+                return name.green().on_blue(); // Sticky bit directory (e.g., /tmp)
+            }
+        }
         return name.blue().bold();
     }
 
@@ -255,16 +277,83 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     {
         let mode = metadata.permissions().mode();
 
+        // Check for setuid bit (0o4000)
+        let is_setuid = mode & 0o4000 != 0;
+
+        // Check for setgid bit (0o2000)
+        let is_setgid = mode & 0o2000 != 0;
+
         // Check if file is executable (0o111 = user/group/other execute bits)
         let is_executable = mode & 0o111 != 0;
 
         // Check if file is writable by others (0o002 = other write bit)
         let is_world_writable = mode & 0o002 != 0;
 
+        // Check for special file types using file_type()
+        let file_type = metadata.file_type();
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::FileTypeExt;
+
+            // Character or block devices
+            if file_type.is_char_device() || file_type.is_block_device() {
+                return name.yellow().bold();
+            }
+
+            // Socket or FIFO (named pipe)
+            if file_type.is_socket() || file_type.is_fifo() {
+                return name.yellow();
+            }
+        }
+
+        // Setuid files (highest priority - security sensitive)
+        if is_setuid {
+            return name.white().on_red(); // White text on red background
+        }
+
+        // Setgid files (high priority - security sensitive)
+        if is_setgid {
+            return name.black().on_yellow(); // Black text on yellow background
+        }
+
+        // World-writable files (warning)
         if is_world_writable {
-            return name.yellow(); // Warning: writable by others
-        } else if is_executable {
-            return name.green(); // Executable file
+            return name.yellow();
+        }
+
+        // Executable files
+        if is_executable {
+            return name.green();
+        }
+    }
+
+    // Check file extension for type-based coloring
+    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+        let ext_lower = ext.to_lowercase();
+
+        // Archive files
+        if matches!(
+            ext_lower.as_str(),
+            "zip" | "tar" | "gz" | "bz2" | "xz" | "7z" | "rar" | "tgz" | "tbz2" | "txz"
+        ) {
+            return name.red();
+        }
+
+        // Image files
+        if matches!(
+            ext_lower.as_str(),
+            "png" | "jpg" | "jpeg" | "gif" | "bmp" | "svg" | "ico" | "webp" | "tiff" | "tif"
+        ) {
+            return name.magenta();
+        }
+
+        // Audio/video files
+        if matches!(
+            ext_lower.as_str(),
+            "mp3" | "mp4" | "avi" | "mkv" | "flac" | "wav" | "ogg" | "mov" | "wmv" | "webm" | "m4a"
+        ) {
+            return name.bright_magenta();
         }
     }
 

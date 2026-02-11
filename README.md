@@ -26,11 +26,20 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 - Show hidden files with the `-a` or `--all` flag
 - Limit traversal depth with the `-d` or `--depth` option
 - Sort entries alphabetically
-- Color-coded output based on file types and permissions:
-  - Directories: Blue (bold)
-  - Executable files: Green
-  - World-writable files: Yellow (warning)
-  - Symbolic links: Cyan
+- **Enhanced color-coded output** based on file types and permissions:
+  - **Permissions-based coloring:**
+    - Setuid files: White on red background (security sensitive)
+    - Setgid files: Black on yellow background (security sensitive)
+    - Sticky bit directories: Green on blue background (e.g., `/tmp`)
+    - Executable files: Green
+    - World-writable files: Yellow (warning)
+  - **File type coloring:**
+    - Directories: Blue (bold)
+    - Symbolic links: Cyan
+    - Archive files (zip, tar, gz, etc.): Red
+    - Image files (png, jpg, svg, etc.): Magenta
+    - Audio/video files (mp3, mp4, mkv, etc.): Bright magenta
+    - Special files (devices, sockets, pipes): Yellow (bold)
 - Clean, readable output with visual tree structure
 
 ## Installation
