@@ -36,6 +36,8 @@ cargo ndk -t arm64-v8a build --release
 
 Pre-built Android binaries are available in the [GitHub Releases](https://github.com/npequeux/rutree2/releases/latest).
 
+**⚠️ IMPORTANT:** Before downloading, verify that Android binaries are available by visiting the releases page and confirming that the archive files are listed.
+
 1. **Download the appropriate archive for your device**:
    - `rutree2-android-arm64.tar.gz` - For most modern Android devices (64-bit ARM)
    - `rutree2-android-armv7.tar.gz` - For older Android devices (32-bit ARM)
@@ -45,10 +47,13 @@ Pre-built Android binaries are available in the [GitHub Releases](https://github
    # Option 1: Use adb
    adb push rutree2-android-arm64.tar.gz /sdcard/
 
-   # Option 2: Download directly in Termux
+   # Option 2: Download directly in Termux (with error handling)
    # (In Termux terminal)
    cd ~
-   wget https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz
+   curl -L -f -o rutree2-android-arm64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || { echo "Error: Download failed. Please verify the release exists at https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
+   
+   # Verify download is valid before extracting
+   file rutree2-android-arm64.tar.gz  # Should show "gzip compressed data"
    ```
 
 3. **Extract the archive**:
@@ -159,6 +164,28 @@ Common outputs:
 ```
 
 ## Troubleshooting
+
+### Download Issues
+
+If the download fails or you get errors about the release not being found:
+
+1. **Verify the release exists**:
+   - Visit https://github.com/npequeux/rutree2/releases/latest
+   - Confirm that `rutree2-android-arm64.tar.gz` or `rutree2-android-armv7.tar.gz` files are listed
+   - If these files are not present, the Android binaries haven't been released yet
+
+2. **Check what you downloaded**:
+   ```bash
+   # Check file type - should show "gzip compressed data"
+   file rutree2-android-arm64.tar.gz
+   
+   # If it shows "HTML document" or "ASCII text", you downloaded an error page
+   # This means the release URL doesn't exist yet
+   ```
+
+3. **If release doesn't exist yet**:
+   - Build from source instead (see "Building for Android" section above)
+   - Or wait for the next release that includes Android binaries
 
 ### Archive Extraction Issues
 
