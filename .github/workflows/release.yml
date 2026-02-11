@@ -78,6 +78,7 @@ jobs:
 
       - name: Setup Android NDK
         if: contains(matrix.target, 'android')
+        id: setup-ndk
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r25c
@@ -94,6 +95,8 @@ jobs:
             cargo build --release --target ${{ matrix.target }}
           fi
         shell: bash
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
       - name: Prepare package
         shell: bash
