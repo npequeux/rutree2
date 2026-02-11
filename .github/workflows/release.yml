@@ -55,6 +55,12 @@ jobs:
           - target: armv7-linux-androideabi
             os: ubuntu-latest
             asset_name_suffix: "android-armv7.tar.gz"
+          - target: i686-linux-android
+            os: ubuntu-latest
+            asset_name_suffix: "android-x86.tar.gz"
+          - target: x86_64-linux-android
+            os: ubuntu-latest
+            asset_name_suffix: "android-x86_64.tar.gz"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -91,6 +97,10 @@ jobs:
             cargo ndk -t arm64-v8a build --release
           elif [[ "${{ matrix.target }}" == "armv7-linux-androideabi" ]]; then
             cargo ndk -t armeabi-v7a build --release
+          elif [[ "${{ matrix.target }}" == "i686-linux-android" ]]; then
+            cargo ndk -t x86 build --release
+          elif [[ "${{ matrix.target }}" == "x86_64-linux-android" ]]; then
+            cargo ndk -t x86_64 build --release
           else
             cargo build --release --target ${{ matrix.target }}
           fi
