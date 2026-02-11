@@ -11,11 +11,11 @@ This guide will get you started testing `rutree2` on your Android phone in just 
    In Termux or via browser, download:
    ```bash
    # For ARM64 devices (most modern phones from 2016+)
-   curl -L -o rutree2 https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz
+   curl -L -o rutree2-android-arm64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz
    tar -xzf rutree2-android-arm64.tar.gz
    
    # OR for ARMv7 devices (older phones)
-   curl -L -o rutree2 https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz
+   curl -L -o rutree2-android-armv7.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz
    tar -xzf rutree2-android-armv7.tar.gz
    ```
 
