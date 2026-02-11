@@ -85,7 +85,7 @@ jobs:
 
       - name: Build binary
         run: |
-          if [[ "${{ matrix.target }}" == *"android"* ]]; then
+          if [[ "${{ matrix.target }}" == "aarch64-linux-android" || "${{ matrix.target }}" == "armv7-linux-androideabi" ]]; then
             # Map Rust targets to NDK ABI names
             if [[ "${{ matrix.target }}" == "aarch64-linux-android" ]]; then
               cargo ndk -t arm64-v8a build --release
