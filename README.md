@@ -21,6 +21,7 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 ## Features
 
 - Display directory trees with proper indentation and tree characters
+- **Visualize symbolic links** with `->` indicator showing both origin and destination
 - Show hidden files with the `-a` or `--all` flag
 - Limit traversal depth with the `-d` or `--depth` option
 - Sort entries alphabetically
@@ -142,10 +143,30 @@ rutree2 --all --depth 1 /path/to/directory
 ├── Cargo.toml
 ├── LICENSE
 ├── README.md
+├── docs/ -> documentation    # Symbolic link to directory
 ├── src/
 │   └── main.rs
 └── target/
     └── debug/
+```
+
+### Symbolic Links
+
+Symbolic links are displayed with a `->` indicator showing the target:
+
+```
+.
+├── README.md
+├── absolute_link -> /etc/hostname
+├── broken_link -> missing_file
+├── docs/
+│   └── config/
+│       └── settings.yaml
+├── link_to_readme -> README.md
+├── main.rs
+└── shortcuts/ -> docs
+    └── config/
+        └── settings.yaml
 ```
 
 ## License
