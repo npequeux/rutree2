@@ -13,7 +13,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code 
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Create Release
@@ -96,7 +96,7 @@ jobs:
 
           PACKAGE_NAME="rutree2-${{ matrix.asset_name_suffix }}"
           STAGING_DIR="staging"
-          
+
           mkdir "$STAGING_DIR"
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
@@ -104,7 +104,7 @@ jobs:
           else
             SOURCE_BINARY_PATH="target/${{ matrix.target }}/release/rutree2"
           fi
-          
+
           echo "Verifying binary exists at: ${SOURCE_BINARY_PATH}"
           if [ ! -f "$SOURCE_BINARY_PATH" ]; then
             echo "::error::Binary not found!"
@@ -125,6 +125,108 @@ jobs:
           fi
 
           echo "ASSET=${PACKAGE_NAME}" >> "$GITHUB_ENV"
+
+      - name: Validate Archive
+        shell: bash
+        run: |
+          set -e
+
+          PACKAGE_NAME="${{ env.ASSET }}"
+
+          echo "=== Validating archive: ${PACKAGE_NAME} ==="
+
+          # Check if archive file exists
+          if [ ! -f "$PACKAGE_NAME" ]; then
+            echo "::error::Archive file not found: ${PACKAGE_NAME}"
+            exit 1
+          fi
+
+          echo "✓ Archive file exists"
+
+          # Check if archive is not empty
+          FILESIZE=$(stat -c%s "$PACKAGE_NAME" 2>/dev/null || stat -f%z "$PACKAGE_NAME" 2>/dev/null || echo "0")
+          if [ "$FILESIZE" -eq 0 ]; then
+            echo "::error::Archive file is empty"
+            exit 1
+          fi
+
+          echo "✓ Archive file is not empty (size: ${FILESIZE} bytes)"
+
+          # Skip validation for Windows zip files
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "Validating zip archive..."
+
+            # Test zip integrity
+            if ! 7z t "$PACKAGE_NAME" > /dev/null; then
+              echo "::error::Zip archive integrity check failed"
+              exit 1
+            fi
+
+            echo "✓ Zip archive is valid"
+
+            # List contents
+            echo "Archive contents:"
+            7z l "$PACKAGE_NAME"
+
+          else
+            echo "Validating tar.gz archive..."
+
+            # Test if it's a valid gzip file
+            if ! gzip -t "$PACKAGE_NAME"; then
+              echo "::error::Archive is not a valid gzip file"
+              exit 1
+            fi
+
+            echo "✓ Archive is a valid gzip file"
+
+            # Test if tar can list contents without errors
+            if ! tar -tzf "$PACKAGE_NAME" > /dev/null; then
+              echo "::error::Tar archive structure is invalid"
+              exit 1
+            fi
+
+            echo "✓ Tar archive structure is valid"
+
+            # List contents
+            echo "Archive contents:"
+            tar -tzf "$PACKAGE_NAME"
+
+            # Verify expected files are present
+            EXPECTED_FILES=("rutree2" "README.md")
+            for file in "${EXPECTED_FILES[@]}"; do
+              if ! tar -tzf "$PACKAGE_NAME" | grep -q "$file"; then
+                echo "::error::Expected file '$file' not found in archive"
+                exit 1
+              fi
+            done
+
+            echo "✓ All expected files present in archive"
+
+            # Extract to a test directory to ensure extraction works
+            TEST_DIR="test_extract_$$"
+            mkdir -p "$TEST_DIR"
+            if ! tar -xzf "$PACKAGE_NAME" -C "$TEST_DIR"; then
+              echo "::error::Failed to extract archive"
+              rm -rf "$TEST_DIR"
+              exit 1
+            fi
+
+            echo "✓ Archive extracts successfully"
+
+            # Verify binary is executable (not on Windows)
+            if [ -f "$TEST_DIR/rutree2" ]; then
+              if [ ! -x "$TEST_DIR/rutree2" ]; then
+                echo "::warning::Binary is not executable"
+              else
+                echo "✓ Binary is executable"
+              fi
+            fi
+
+            # Clean up test directory
+            rm -rf "$TEST_DIR"
+          fi
+
+          echo "=== Archive validation passed ==="
 
       - name: Upload Release Asset
         env:
