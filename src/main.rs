@@ -35,6 +35,7 @@ use clap::Parser;
 use colored::*;
 use std::fs;
 use std::io::IsTerminal;
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
