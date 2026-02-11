@@ -34,26 +34,33 @@ cargo ndk -t arm64-v8a build --release
 
 ### Downloading Pre-built Releases
 
-Pre-built Android binaries are available in the [GitHub Releases](https://github.com/npequeux/rutree2/releases/latest).
+Pre-built Android binaries are available in [GitHub Releases](https://github.com/npequeux/rutree2/releases).
 
-**⚠️ IMPORTANT:** Before downloading, verify that Android binaries are available by visiting the releases page and confirming that the archive files are listed.
+**⚠️ IMPORTANT:** Before downloading, verify that a versioned release with Android binaries exists by visiting the releases page.
 
-1. **Download the appropriate archive for your device**:
+1. **Check available releases**:
+   - Visit https://github.com/npequeux/rutree2/releases
+   - Look for a release with a version tag (like v1.0.0, v0.1.0, etc.)
+   - Confirm that the archive files are listed as assets
+
+2. **Download the appropriate archive for your device**:
    - `rutree2-android-arm64.tar.gz` - For most modern Android devices (64-bit ARM)
    - `rutree2-android-armv7.tar.gz` - For older Android devices (32-bit ARM)
 
-2. **Transfer the archive to your device**:
+3. **Transfer the archive to your device**:
    ```bash
    # Option 1: Use adb
    adb push rutree2-android-arm64.tar.gz /sdcard/
 
-   # Option 2: Download directly in Termux (with error handling)
+   # Option 2: Download directly in Termux (with version specification)
    # (In Termux terminal)
    cd ~
+   VERSION="v1.0.0"  # Replace with actual version from https://github.com/npequeux/rutree2/releases
+   
    curl -L -f -o rutree2-android-arm64.tar.gz \
-     https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || \
-     { echo "Error: Download failed."; \
-       echo "Please verify the release exists at https://github.com/npequeux/rutree2/releases/latest"; \
+     "https://github.com/npequeux/rutree2/releases/download/${VERSION}/rutree2-android-arm64.tar.gz" || \
+     { echo "Error: Download failed for version ${VERSION}."; \
+       echo "Please check https://github.com/npequeux/rutree2/releases for available versions"; \
        exit 1; }
    
    # Verify download is valid before extracting
@@ -74,10 +81,12 @@ Pre-built Android binaries are available in the [GitHub Releases](https://github
 - The binary is present and executable
 - The binary can run and show help/version information
 
-If you encounter extraction issues, try:
-1. Verify the download is complete: `ls -lh rutree2-android-arm64.tar.gz`
-2. Check the file type: `file rutree2-android-arm64.tar.gz` (should show "gzip compressed data")
-3. Test the archive: `gzip -t rutree2-android-arm64.tar.gz`
+If you encounter download or extraction issues, try:
+1. Verify a versioned release exists at https://github.com/npequeux/rutree2/releases
+2. Check the download is complete: `ls -lh rutree2-android-arm64.tar.gz`
+3. Verify the file type: `file rutree2-android-arm64.tar.gz` (should show "gzip compressed data", not "HTML document")
+4. Test the archive: `gzip -t rutree2-android-arm64.tar.gz`
+5. If all else fails, build from source using the instructions below
 4. Re-download if the file appears corrupted
 
 ### Method 1: Using Termux (Recommended)
@@ -171,12 +180,13 @@ Common outputs:
 
 ### Download Issues
 
-If the download fails or you get errors about the release not being found:
+If you get a 404 error or "Download failed" message:
 
-1. **Verify the release exists**:
-   - Visit https://github.com/npequeux/rutree2/releases/latest
-   - Confirm that `rutree2-android-arm64.tar.gz` or `rutree2-android-armv7.tar.gz` files are listed
-   - If these files are not present, the Android binaries haven't been released yet
+1. **Verify a proper versioned release exists**:
+   - Visit https://github.com/npequeux/rutree2/releases
+   - Look for a release with a version tag (e.g., v1.0.0, v0.1.0)
+   - Confirm that `rutree2-android-arm64.tar.gz` or `rutree2-android-armv7.tar.gz` files are listed as assets
+   - If no versioned release exists, you need to build from source (see "Building for Android" section)
 
 2. **Check what you downloaded**:
    ```bash
