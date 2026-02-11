@@ -104,8 +104,26 @@ jobs:
 
       - name: Update Cargo.toml
         run: |
-          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.new_version }}\"/" Cargo.toml
-          echo "Updated Cargo.toml to version ${{ steps.version.outputs.new_version }}"
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          awk -v new_ver="$NEW_VERSION" '
+            BEGIN { in_package = 0 }
+            /^\[package\]/ { in_package = 1; print; next }
+            /^\[.*\]/ {
+              if ($0 !~ /^\[package\]/) {
+                in_package = 0
+              }
+              print
+              next
+            }
+            in_package && /^version = "/ {
+              sub(/^version = "[^"]*"/, "version = \"" new_ver "\"")
+              print
+              next
+            }
+            { print }
+          ' Cargo.toml > Cargo.toml.tmp
+          mv Cargo.toml.tmp Cargo.toml
+          echo "Updated Cargo.toml to version $NEW_VERSION"
 
       - name: Update CHANGELOG.md
         env:
@@ -118,13 +136,13 @@ jobs:
           NEW_VERSION="${{ steps.version.outputs.new_version }}"
 
           # Create new changelog entry
-          cat > /tmp/changelog_entry.md << EOF
-          ## [$NEW_VERSION] - $RELEASE_DATE
-
-          ### Changed
-          - Resolved issue #$ISSUE_NUMBER: $ISSUE_TITLE
-
-          EOF
+          {
+            echo "## [$NEW_VERSION] - $RELEASE_DATE"
+            echo ""
+            echo "### Changed"
+            echo "- Resolved issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+            echo ""
+          } > /tmp/changelog_entry.md
 
           # Insert new entry after the header
           if [ -f CHANGELOG.md ]; then
@@ -142,15 +160,15 @@ jobs:
             fi
           else
             # Create new changelog
-            cat > CHANGELOG.md << EOF
-          # Changelog
-
-          All notable changes to this project will be documented in this file.
-
-          The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-          and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-          EOF
+            {
+              echo "# Changelog"
+              echo ""
+              echo "All notable changes to this project will be documented in this file."
+              echo ""
+              echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),"
+              echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."
+              echo ""
+            } > CHANGELOG.md
             cat /tmp/changelog_entry.md >> CHANGELOG.md
           fi
 
