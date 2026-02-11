@@ -15,7 +15,7 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 - [Quick Start (Android)](QUICKSTART-ANDROID.md) - Fast-track Android setup
 - [Testing Guide](TESTING.md) - Information about testing the project
 - [CI/CD Improvements](CI_IMPROVEMENTS.md) - Details about documentation publishing, lint checks, and workflows
-- [Automatic Release Process](AUTO_RELEASE.md) - How releases are automatically generated when issues are resolved
+- [Automatic Release Process](AUTO_RELEASE.md) - How releases are automatically generated on each commit
 
 > **Note:** To enable documentation publishing, go to repository Settings → Pages → Source and select "GitHub Actions".
 
