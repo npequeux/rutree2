@@ -4,18 +4,18 @@ This guide will get you started testing `rutree2` on your Android phone in just 
 
 ## Option A: Download Pre-built Binary (Easiest)
 
-**Note:** Android binaries are now included in releases starting from the next release.
+**⚠️ IMPORTANT:** Before using this option, verify that Android binaries are available by visiting the [releases page](https://github.com/npequeux/rutree2/releases/latest) and confirming that `rutree2-android-arm64.tar.gz` or `rutree2-android-armv7.tar.gz` files are listed. If not available, use Option B to build from source.
 
 1. **Download the binary** for your device:
    
    In Termux or via browser, download:
    ```bash
    # For ARM64 devices (most modern phones from 2016+)
-   curl -L -o rutree2-android-arm64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz
+   curl -L -f -o rutree2-android-arm64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || { echo "Error: Download failed. The release may not exist yet. Please check https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
    tar -xzf rutree2-android-arm64.tar.gz
    
    # OR for ARMv7 devices (older phones)
-   curl -L -o rutree2-android-armv7.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz
+   curl -L -f -o rutree2-android-armv7.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz || { echo "Error: Download failed. The release may not exist yet. Please check https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
    tar -xzf rutree2-android-armv7.tar.gz
    ```
 
@@ -146,10 +146,14 @@ Once installed, try these commands:
 
 ## Troubleshooting
 
-**"Not: command not found" error:**
-- This occurs if you downloaded an error page instead of a binary (usually from an invalid URL)
-- Starting from the next release, use the direct download links in Option A
-- Alternatively, build from source using Option B
+**"Not: command not found" or extraction errors:**
+- This occurs if you downloaded an HTML error page instead of the actual binary
+- **Cause:** The release URL doesn't exist yet (no release has been created with Android binaries)
+- **Solution:** 
+  1. Check if the release exists: visit https://github.com/npequeux/rutree2/releases/latest
+  2. Confirm that `rutree2-android-arm64.tar.gz` or `rutree2-android-armv7.tar.gz` is listed
+  3. If not available, use Option B to build from source instead
+- **Verify download:** Before extracting, run `file rutree2-android-arm64.tar.gz` - it should show "gzip compressed data", not "HTML document"
 
 **"Permission denied" error:**
 - Run: `chmod +x rutree2`
