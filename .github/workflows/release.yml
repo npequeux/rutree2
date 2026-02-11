@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,22 +12,18 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - name: Checkout code 
         uses: actions/checkout@v4
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG_NAME" \
+            --title "Release $TAG_NAME" \
+            --generate-notes
 
   build-and-upload:
     name: Build and Upload Binaries
@@ -136,11 +130,8 @@ jobs:
           echo "ASSET=$PACKAGE_NAME" >> $GITHUB_ENV
 
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          gh release upload "$TAG_NAME" "${{ env.ASSET }}" --clobber
