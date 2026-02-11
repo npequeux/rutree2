@@ -50,7 +50,11 @@ Pre-built Android binaries are available in the [GitHub Releases](https://github
    # Option 2: Download directly in Termux (with error handling)
    # (In Termux terminal)
    cd ~
-   curl -L -f -o rutree2-android-arm64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || { echo "Error: Download failed. Please verify the release exists at https://github.com/npequeux/rutree2/releases/latest"; exit 1; }
+   curl -L -f -o rutree2-android-arm64.tar.gz \
+     https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz || \
+     { echo "Error: Download failed."; \
+       echo "Please verify the release exists at https://github.com/npequeux/rutree2/releases/latest"; \
+       exit 1; }
    
    # Verify download is valid before extracting
    file rutree2-android-arm64.tar.gz  # Should show "gzip compressed data"
