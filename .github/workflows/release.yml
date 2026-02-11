@@ -224,7 +224,7 @@ jobs:
             # Check file type
             FILE_TYPE=$(file "$PACKAGE_NAME")
             echo "File type: $FILE_TYPE"
-            
+
             if ! echo "$FILE_TYPE" | grep -q "gzip compressed data"; then
               echo "::error::Archive is not a gzip file (file type check failed)"
               echo "::error::Expected 'gzip compressed data' but got: $FILE_TYPE"
