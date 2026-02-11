@@ -34,6 +34,7 @@
 use clap::Parser;
 use colored::*;
 use std::fs;
+use std::io::IsTerminal;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
@@ -71,7 +72,7 @@ fn main() {
         "always" => colored::control::set_override(true),
         _ => {
             // Auto-detect: use colors if stdout is a terminal
-            if !atty::is(atty::Stream::Stdout) {
+            if !std::io::stdout().is_terminal() {
                 colored::control::set_override(false);
             }
         }
@@ -228,13 +229,7 @@ fn display_tree(
 /// - Symlinks: Cyan
 /// - Default: No color
 fn colorize_filename(name: &str, path: &Path) -> ColoredString {
-    // Try to get metadata for the path
-    let metadata = match path.metadata() {
-        Ok(m) => m,
-        Err(_) => return name.normal(), // If we can't read metadata, return uncolored
-    };
-
-    // Check if it's a symlink
+    // Check if it's a symlink first (using symlink_metadata to avoid following the link)
     if path
         .symlink_metadata()
         .map(|m| m.is_symlink())
@@ -242,6 +237,12 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     {
         return name.cyan();
     }
+
+    // Try to get metadata for the path (follows symlinks if present)
+    let metadata = match path.metadata() {
+        Ok(m) => m,
+        Err(_) => return name.normal(), // If we can't read metadata, return uncolored
+    };
 
     // Check if it's a directory
     if metadata.is_dir() {
@@ -253,10 +254,10 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     {
         let mode = metadata.permissions().mode();
 
-        // Check if file is executable (any execute bit set)
+        // Check if file is executable (0o111 = user/group/other execute bits)
         let is_executable = mode & 0o111 != 0;
 
-        // Check if file is writable by others
+        // Check if file is writable by others (0o002 = other write bit)
         let is_world_writable = mode & 0o002 != 0;
 
         if is_world_writable {
