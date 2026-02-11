@@ -143,7 +143,6 @@ rutree2 --all --depth 1 /path/to/directory
 ├── Cargo.toml
 ├── LICENSE
 ├── README.md
-├── docs/ -> documentation    # Symbolic link to directory
 ├── src/
 │   └── main.rs
 └── target/
@@ -152,7 +151,7 @@ rutree2 --all --depth 1 /path/to/directory
 
 ### Symbolic Links
 
-Symbolic links are displayed with a `->` indicator showing the target:
+Symbolic links are displayed with a `->` indicator showing the target. Directory symlinks are marked with a trailing `/`. When traversing symlinks to directories, the tree displays their contents:
 
 ```
 .
@@ -168,6 +167,8 @@ Symbolic links are displayed with a `->` indicator showing the target:
     └── config/
         └── settings.yaml
 ```
+
+In this example, `shortcuts/` is a symbolic link pointing to the `docs` directory, and the tree follows the link to show its contents.
 
 ## License
 
