@@ -256,7 +256,7 @@ jobs:
 
             # Test binary can be invoked (basic functionality test)
             echo "Testing binary execution..."
-            if "$TEST_DIR/rutree2" --help 2>&1 | grep -iq "rutree2"; then
+            if "$TEST_DIR/rutree2" --help 2>&1 | grep -q "rutree2"; then
               echo "✓ Binary runs and shows help"
             else
               echo "::error::Binary does not execute correctly or produce expected output"
