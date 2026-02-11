@@ -32,6 +32,45 @@ cargo ndk -t arm64-v8a build --release
 
 ## Using on Android Device
 
+### Downloading Pre-built Releases
+
+Pre-built Android binaries are available in the [GitHub Releases](https://github.com/npequeux/rutree2/releases/latest).
+
+1. **Download the appropriate archive for your device**:
+   - `rutree2-android-arm64.tar.gz` - For most modern Android devices (64-bit ARM)
+   - `rutree2-android-armv7.tar.gz` - For older Android devices (32-bit ARM)
+
+2. **Transfer the archive to your device**:
+   ```bash
+   # Option 1: Use adb
+   adb push rutree2-android-arm64.tar.gz /sdcard/
+
+   # Option 2: Download directly in Termux
+   # (In Termux terminal)
+   cd ~
+   wget https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz
+   ```
+
+3. **Extract the archive**:
+   ```bash
+   # In Termux
+   tar -xzf rutree2-android-arm64.tar.gz
+   chmod +x rutree2
+   ./rutree2 --help
+   ```
+
+**Note**: All release archives are automatically validated during the build process to ensure:
+- The archive is properly gzip-compressed
+- The archive can be extracted successfully
+- The binary is present and executable
+- The binary can run and show help/version information
+
+If you encounter extraction issues, try:
+1. Verify the download is complete: `ls -lh rutree2-android-arm64.tar.gz`
+2. Check the file type: `file rutree2-android-arm64.tar.gz` (should show "gzip compressed data")
+3. Test the archive: `gzip -t rutree2-android-arm64.tar.gz`
+4. Re-download if the file appears corrupted
+
 ### Method 1: Using Termux (Recommended)
 
 1. **Install Termux** from [F-Droid](https://f-droid.org/packages/com.termux/) (recommended) or Google Play Store
@@ -120,6 +159,39 @@ Common outputs:
 ```
 
 ## Troubleshooting
+
+### Archive Extraction Issues
+
+If you get errors like "gzip: not in gzip format" or "tar: Child returned status 1":
+
+1. **Verify the archive is complete**:
+   ```bash
+   ls -lh rutree2-android-arm64.tar.gz
+   # Should show a file size around 500-700 KB
+   ```
+
+2. **Check the file type**:
+   ```bash
+   file rutree2-android-arm64.tar.gz
+   # Should output: "gzip compressed data, from Unix..."
+   ```
+
+3. **Test the gzip compression**:
+   ```bash
+   gzip -t rutree2-android-arm64.tar.gz
+   # Should complete silently (no output = success)
+   ```
+
+4. **If the file is not gzipped** (e.g., you see "POSIX tar archive" instead):
+   ```bash
+   # Try extracting without -z flag
+   tar -xf rutree2-android-arm64.tar.gz
+   ```
+
+5. **Re-download the file**:
+   - The download may have been interrupted or corrupted
+   - Make sure you're downloading the actual binary file, not an HTML error page
+   - Check the file size matches the release page
 
 ### Permission Denied
 - Ensure the binary has execute permissions: `chmod +x rutree2`
