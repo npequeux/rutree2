@@ -164,13 +164,15 @@ Common outputs:
 
 If you get errors like "gzip: not in gzip format" or "tar: Child returned status 1" when extracting your downloaded archive:
 
+**Note:** In the examples below, replace the wildcard pattern `rutree2-android-*.tar.gz` with your specific archive filename:
+- For ARM64 devices (most modern phones): `rutree2-android-arm64.tar.gz`
+- For ARMv7 devices (older phones): `rutree2-android-armv7.tar.gz`
+
 1. **Verify the archive is complete**:
    ```bash
    ls -lh rutree2-android-*.tar.gz
    # Should show the downloaded archive file
    ```
-
-   Note: Replace `rutree2-android-*.tar.gz` with your specific archive name (e.g., `rutree2-android-arm64.tar.gz` for ARM64 devices or `rutree2-android-armv7.tar.gz` for ARMv7 devices).
 
 2. **Check the file type**:
    ```bash

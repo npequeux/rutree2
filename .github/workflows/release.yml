@@ -256,13 +256,11 @@ jobs:
 
             # Test binary can be invoked (basic functionality test)
             echo "Testing binary execution..."
-            if "$TEST_DIR/rutree2" --version 2>&1 | grep -iq "rutree"; then
-              echo "✓ Binary runs and reports version"
-            elif "$TEST_DIR/rutree2" --help 2>&1 | head -1 | grep -iq "rutree"; then
-              echo "✓ Binary runs (--help works)"
+            if "$TEST_DIR/rutree2" --help 2>&1 | grep -iq "rutree2"; then
+              echo "✓ Binary runs and shows help"
             else
               echo "::error::Binary does not execute correctly or produce expected output"
-              echo "::error::Binary should respond to --version or --help flags"
+              echo "::error::Binary should respond to --help flag and mention 'rutree2'"
               rm -rf "$TEST_DIR"
               exit 1
             fi
