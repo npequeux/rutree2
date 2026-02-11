@@ -167,7 +167,7 @@ If you get errors like "gzip: not in gzip format" or "tar: Child returned status
 1. **Verify the archive is complete**:
    ```bash
    ls -lh rutree2-android-arm64.tar.gz
-   # Should show a file size around 500-700 KB
+   # Should show a reasonable file size (typically several hundred KB)
    ```
 
 2. **Check the file type**:
