@@ -42,6 +42,8 @@ Available platforms:
 - **macOS** (ARM64 Apple Silicon): `rutree2-macos-arm64.tar.gz`
 - **Android** (ARM64): `rutree2-android-arm64.tar.gz`
 - **Android** (ARMv7): `rutree2-android-armv7.tar.gz`
+- **Android** (x86_64): `rutree2-android-x86_64.tar.gz`
+- **Android** (x86): `rutree2-android-x86.tar.gz`
 
 ### Build from Source
 
@@ -72,6 +74,8 @@ For detailed Android installation instructions, see [QUICKSTART-ANDROID.md](QUIC
 Available Android binaries in releases:
 - ARM64 (most modern devices): `rutree2-android-arm64.tar.gz`
 - ARMv7 (older devices): `rutree2-android-armv7.tar.gz`
+- x86_64 (modern emulators): `rutree2-android-x86_64.tar.gz`
+- x86 (older emulators): `rutree2-android-x86.tar.gz`
 
 If you prefer to build from source, binaries are available at:
 - ARM64: `target/aarch64-linux-android/release/rutree2`
