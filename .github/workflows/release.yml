@@ -353,7 +353,7 @@ jobs:
                 exit 1
               fi
             else
-              echo "⊘ Skipping execution test for Android target (cannot run on x86_64 runner)"
+              echo "::notice::Skipping execution test for Android target (cannot run on x86_64 runner)"
             fi
 
             # Clean up test directory
