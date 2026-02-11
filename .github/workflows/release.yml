@@ -32,11 +32,11 @@ jobs:
       - name: Get Tag Name
         id: get-tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            # When triggered by workflow_run, get the latest tag
+          if [ "${{ github.event_name }}" = "workflow_run" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # When triggered by workflow_run or manual dispatch, get the latest tag
             TAG_NAME=$(git describe --tags --abbrev=0)
           else
-            # When triggered by tag push or manual dispatch, use github.ref_name
+            # When triggered by tag push, use github.ref_name
             TAG_NAME="${{ github.ref_name }}"
           fi
           echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
