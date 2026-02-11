@@ -49,6 +49,12 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos-latest
             asset_name_suffix: "macos-arm64.tar.gz"
+          - target: aarch64-linux-android
+            os: ubuntu-latest
+            asset_name_suffix: "android-arm64.tar.gz"
+          - target: armv7-linux-androideabi
+            os: ubuntu-latest
+            asset_name_suffix: "android-armv7.tar.gz"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -66,8 +72,30 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
+      - name: Install cargo-ndk for Android builds
+        if: contains(matrix.target, 'android')
+        run: cargo install cargo-ndk
+
+      - name: Setup Android NDK
+        if: contains(matrix.target, 'android')
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+          add-to-path: true
+
       - name: Build binary
-        run: cargo build --release --target ${{ matrix.target }}
+        run: |
+          if [[ "${{ matrix.target }}" == *"android"* ]]; then
+            # Map Rust targets to NDK ABI names
+            if [[ "${{ matrix.target }}" == "aarch64-linux-android" ]]; then
+              cargo ndk -t arm64-v8a build --release
+            elif [[ "${{ matrix.target }}" == "armv7-linux-androideabi" ]]; then
+              cargo ndk -t armeabi-v7a build --release
+            fi
+          else
+            cargo build --release --target ${{ matrix.target }}
+          fi
+        shell: bash
 
       - name: Prepare package
         shell: bash
