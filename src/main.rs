@@ -8,6 +8,7 @@
 //! - Show hidden files with the `-a` or `--all` flag
 //! - Limit traversal depth with the `-d` or `--depth` option
 //! - Sort entries alphabetically
+//! - Color-coded output based on file types and permissions
 //! - Clean, readable output with visual tree structure
 //!
 //! ## Usage
@@ -24,10 +25,15 @@
 //!
 //! # Limit depth to 2 levels
 //! rutree2 --depth 2
+//!
+//! # Always use colors
+//! rutree2 --color always
 //! ```
 
 use clap::Parser;
+use colored::*;
 use std::fs;
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 /// Command-line interface configuration for rutree2
@@ -46,6 +52,10 @@ struct Cli {
     /// Maximum depth to traverse
     #[arg(short = 'd', long)]
     depth: Option<usize>,
+
+    /// Use colors to distinguish file types and permissions (auto, always, never)
+    #[arg(short = 'C', long, default_value = "auto")]
+    color: String,
 }
 
 /// Main entry point for the rutree2 application.
@@ -53,6 +63,18 @@ struct Cli {
 /// Parses command-line arguments and initiates the directory tree display.
 fn main() {
     let cli = Cli::parse();
+
+    // Configure colored output based on --color option
+    match cli.color.as_str() {
+        "never" => colored::control::set_override(false),
+        "always" => colored::control::set_override(true),
+        _ => {
+            // Auto-detect: use colors if stdout is a terminal
+            if !atty::is(atty::Stream::Stdout) {
+                colored::control::set_override(false);
+            }
+        }
+    }
 
     match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
         Ok(_) => {}
@@ -103,7 +125,8 @@ fn display_tree(
 
     // Print current directory/file
     if current_depth == 0 {
-        println!("{}", name);
+        let colored_name = colorize_filename(name, path);
+        println!("{}", colored_name);
     }
 
     // Check if it's a directory
@@ -144,7 +167,10 @@ fn display_tree(
                 name_str.to_string()
             };
 
-            println!("{}{}{}", prefix, connector, display_name);
+            // Colorize the filename based on permissions and type
+            let colored_name = colorize_filename(&display_name, &path);
+
+            println!("{}{}{}", prefix, connector, colored_name);
 
             // Recursively display subdirectories
             if path.is_dir() {
@@ -160,4 +186,62 @@ fn display_tree(
     }
 
     Ok(())
+}
+
+/// Colorize a file name based on its metadata (permissions and file type).
+///
+/// # Arguments
+///
+/// * `name` - The file name to colorize
+/// * `path` - The path to the file (to check metadata)
+///
+/// # Returns
+///
+/// A colored string based on file type and permissions:
+/// - Directories: Blue and bold
+/// - Executable files: Green
+/// - Writable by others (o+w): Yellow (warning)
+/// - Symlinks: Cyan
+/// - Default: No color
+fn colorize_filename(name: &str, path: &Path) -> ColoredString {
+    // Try to get metadata for the path
+    let metadata = match path.metadata() {
+        Ok(m) => m,
+        Err(_) => return name.normal(), // If we can't read metadata, return uncolored
+    };
+
+    // Check if it's a symlink
+    if path
+        .symlink_metadata()
+        .map(|m| m.is_symlink())
+        .unwrap_or(false)
+    {
+        return name.cyan();
+    }
+
+    // Check if it's a directory
+    if metadata.is_dir() {
+        return name.blue().bold();
+    }
+
+    // Get file permissions (Unix-specific)
+    #[cfg(unix)]
+    {
+        let mode = metadata.permissions().mode();
+
+        // Check if file is executable (any execute bit set)
+        let is_executable = mode & 0o111 != 0;
+
+        // Check if file is writable by others
+        let is_world_writable = mode & 0o002 != 0;
+
+        if is_world_writable {
+            return name.yellow(); // Warning: writable by others
+        } else if is_executable {
+            return name.green(); // Executable file
+        }
+    }
+
+    // Default: no special color
+    name.normal()
 }

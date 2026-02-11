@@ -24,6 +24,11 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 - Show hidden files with the `-a` or `--all` flag
 - Limit traversal depth with the `-d` or `--depth` option
 - Sort entries alphabetically
+- Color-coded output based on file types and permissions:
+  - Directories: Blue (bold)
+  - Executable files: Green
+  - World-writable files: Yellow (warning)
+  - Symbolic links: Cyan
 - Clean, readable output with visual tree structure
 
 ## Installation
@@ -132,6 +137,7 @@ rutree2 --all --depth 1 /path/to/directory
 - `PATH` - Path to display (defaults to current directory)
 - `-a, --all` - Show hidden files
 - `-d, --depth <DEPTH>` - Maximum depth to traverse
+- `-C, --color <COLOR>` - Use colors to distinguish file types and permissions (auto, always, never) [default: auto]
 - `-h, --help` - Print help information
 
 ## Example Output
