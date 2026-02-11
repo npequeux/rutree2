@@ -55,12 +55,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
+          targets: ${{ matrix.target }}
 
       - name: Install musl-tools for static Linux build
         if: matrix.target == 'x86_64-unknown-linux-musl'
@@ -127,7 +124,7 @@ jobs:
             tar -czf "$PACKAGE_NAME" -C "$STAGING_DIR" .
           fi
 
-          echo "ASSET=$PACKAGE_NAME" >> $GITHUB_ENV
+          echo "ASSET=${PACKAGE_NAME}" >> "$GITHUB_ENV"
 
       - name: Upload Release Asset
         env:
