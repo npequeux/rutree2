@@ -4,10 +4,10 @@ This document contains the steps to complete the v1.0.0 release of rutree2.
 
 ## Prerequisites
 
-The following have been completed:
+Before creating a release, ensure:
 - ✅ Code has been tested and builds successfully
-- ✅ CHANGELOG.md has been updated
-- ✅ Git tag v1.0.0 has been created locally
+- ✅ CHANGELOG.md has been updated with release notes
+- ✅ Version in Cargo.toml matches the release version (e.g., 1.0.0)
 
 ## Steps to Complete the Release
 
@@ -16,6 +16,9 @@ The following have been completed:
 The repository has an automated release workflow that will trigger when you push a tag:
 
 ```bash
+# Create an annotated tag for the release
+git tag -a v1.0.0 -m "Release v1.0.0"
+
 # Push the tag to GitHub
 git push origin v1.0.0
 ```
