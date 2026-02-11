@@ -96,7 +96,7 @@ jobs:
           fi
         shell: bash
         env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_HOME: ${{ contains(matrix.target, 'android') && steps.setup-ndk.outputs.ndk-path || '' }}
 
       - name: Prepare package
         shell: bash
