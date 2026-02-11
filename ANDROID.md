@@ -162,36 +162,38 @@ Common outputs:
 
 ### Archive Extraction Issues
 
-If you get errors like "gzip: not in gzip format" or "tar: Child returned status 1":
+If you get errors like "gzip: not in gzip format" or "tar: Child returned status 1" when extracting your downloaded archive:
 
 1. **Verify the archive is complete**:
    ```bash
-   ls -lh rutree2-android-arm64.tar.gz
-   # Should show a reasonable file size (typically several hundred KB)
+   ls -lh rutree2-android-*.tar.gz
+   # Should show the downloaded archive file
    ```
+
+   Note: Replace `rutree2-android-*.tar.gz` with your specific archive name (e.g., `rutree2-android-arm64.tar.gz` for ARM64 devices or `rutree2-android-armv7.tar.gz` for ARMv7 devices).
 
 2. **Check the file type**:
    ```bash
-   file rutree2-android-arm64.tar.gz
+   file rutree2-android-*.tar.gz
    # Should output: "gzip compressed data, from Unix..."
    ```
 
 3. **Test the gzip compression**:
    ```bash
-   gzip -t rutree2-android-arm64.tar.gz
+   gzip -t rutree2-android-*.tar.gz
    # Should complete silently (no output = success)
    ```
 
 4. **If the file is not gzipped** (e.g., you see "POSIX tar archive" instead):
    ```bash
    # Try extracting without -z flag
-   tar -xf rutree2-android-arm64.tar.gz
+   tar -xf rutree2-android-*.tar.gz
    ```
 
 5. **Re-download the file**:
    - The download may have been interrupted or corrupted
    - Make sure you're downloading the actual binary file, not an HTML error page
-   - Check the file size matches the release page
+   - Check that you downloaded the correct architecture for your device
 
 ### Permission Denied
 - Ensure the binary has execute permissions: `chmod +x rutree2`
