@@ -23,6 +23,7 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     outputs:
       tag_name: ${{ steps.get-tag.outputs.tag_name }}
+      release_existed: ${{ steps.check-release.outputs.exists }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,7 +37,9 @@ jobs:
             # When triggered by workflow_run or manual dispatch, get the latest tag
             if ! TAG_NAME=$(git describe --tags --abbrev=0 2>&1); then
               echo "::error::Failed to get latest tag. No version tags found in repository."
-              echo "::error::The release workflow requires at least one version tag (e.g., v1.0.0) to exist."
+              echo "::error::This workflow was triggered by workflow_run or workflow_dispatch."
+              echo "::error::For these triggers, at least one version tag (e.g., v1.0.0) must exist."
+              echo "::error::To create the first release, push a version tag manually or use the auto-release workflow."
               exit 1
             fi
           else
@@ -89,6 +92,12 @@ jobs:
             echo "Release with tag $TAG_NAME does not exist yet"
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Skip Release Creation
+        if: steps.check-release.outputs.exists == 'true'
+        run: |
+          echo "::notice::Release '${{ steps.get-tag.outputs.tag_name }}' already exists. Skipping release creation."
+          echo "::notice::The build-and-upload job will still run to update release assets."
 
       - name: Create Release
         if: steps.check-release.outputs.exists == 'false'
