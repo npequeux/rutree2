@@ -2,9 +2,44 @@
 
 This guide will get you started testing `rutree2` on your Android phone in just a few minutes.
 
-## Option A: Build from Source on Your Computer
+## Option A: Download Pre-built Binary (Easiest)
 
-**Note:** Android binaries are not currently included in releases. You'll need to build from source.
+**Note:** Android binaries are now included in releases starting from the next release.
+
+1. **Download the binary** for your device:
+   
+   In Termux or via browser, download:
+   ```bash
+   # For ARM64 devices (most modern phones from 2016+)
+   curl -L -o rutree2 https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-arm64.tar.gz
+   tar -xzf rutree2-android-arm64.tar.gz
+   
+   # OR for ARMv7 devices (older phones)
+   curl -L -o rutree2 https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz
+   tar -xzf rutree2-android-armv7.tar.gz
+   ```
+
+2. **Make it executable and run**:
+   ```bash
+   chmod +x rutree2
+   ./rutree2
+   ```
+
+3. **That's it!** You can now use rutree2:
+   ```bash
+   # Show current directory
+   ./rutree2
+   
+   # Show with hidden files
+   ./rutree2 --all
+   
+   # Browse your downloads
+   ./rutree2 /sdcard/Download
+   ```
+
+## Option B: Build from Source
+
+If you want to build from source or if pre-built binaries aren't available yet:
 
 1. **Install prerequisites on your computer**:
    ```bash
@@ -25,9 +60,9 @@ This guide will get you started testing `rutree2` on your Android phone in just 
    cargo ndk -t arm64-v8a build --release
    ```
 
-3. **Transfer to your Android device** - See Option B or C below for transfer methods.
+3. **Transfer to your Android device** - See Option C or D below for transfer methods.
 
-## Option B: Using Termux (After Building)
+## Option C: Using Termux (After Building or Downloading)
 
 **Prerequisites:**
 - Connect your phone to your computer via USB
@@ -66,7 +101,7 @@ This guide will get you started testing `rutree2` on your Android phone in just 
    ./rutree2 /sdcard/Download
    ```
 
-## Option C: Direct Testing via ADB (No Termux needed)
+## Option D: Direct Testing via ADB (No Termux needed)
 
 1. **Transfer and run via ADB shell**:
    ```bash
@@ -112,9 +147,9 @@ Once installed, try these commands:
 ## Troubleshooting
 
 **"Not: command not found" error:**
-- This occurs if you tried to download a pre-built binary that doesn't exist
-- Android binaries are not currently included in releases
-- Solution: Build from source using Option A above
+- This occurs if you downloaded an error page instead of a binary (usually from an invalid URL)
+- Starting from the next release, use the direct download links in Option A
+- Alternatively, build from source using Option B
 
 **"Permission denied" error:**
 - Run: `chmod +x rutree2`
@@ -129,3 +164,14 @@ Once installed, try these commands:
 ## Need Help?
 
 See the full [ANDROID.md](ANDROID.md) documentation for more details and advanced usage.
+
+## Alternative: Installing as an APK (Advanced)
+
+For users who want a more integrated Android app experience, you can create a simple APK wrapper using Termux:Widget or similar tools. However, since `rutree2` is a command-line tool, the recommended installation methods are Options A-D above.
+
+If you're interested in creating a full Android app wrapper with a GUI, you would need to:
+1. Create an Android app project that embeds the native binary
+2. Add a terminal emulator or file browser UI
+3. Package it as an APK using Android Studio
+
+This is beyond the scope of this quick start guide, but the terminal-based installation (Option A with Termux) provides the most straightforward way to use rutree2 on Android devices.
