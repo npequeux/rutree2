@@ -137,11 +137,34 @@ fn display_tree(
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
 
-            // Add directory indicator
-            let display_name = if path.is_dir() {
-                format!("{}/", name_str)
+            // Check if it's a symlink
+            let display_name = if let Ok(metadata) = path.symlink_metadata() {
+                if metadata.is_symlink() {
+                    // Read the symlink target
+                    if let Ok(target) = fs::read_link(&path) {
+                        let target_str = target.display();
+                        // Add directory indicator for symlinks that point to directories
+                        if path.is_dir() {
+                            format!("{}/ -> {}", name_str, target_str)
+                        } else {
+                            format!("{} -> {}", name_str, target_str)
+                        }
+                    } else {
+                        // Broken symlink
+                        format!("{} -> [broken link]", name_str)
+                    }
+                } else if path.is_dir() {
+                    format!("{}/", name_str)
+                } else {
+                    name_str.to_string()
+                }
             } else {
-                name_str.to_string()
+                // Fallback if metadata can't be read
+                if path.is_dir() {
+                    format!("{}/", name_str)
+                } else {
+                    name_str.to_string()
+                }
             };
 
             println!("{}{}{}", prefix, connector, display_name);
