@@ -5,6 +5,12 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Auto Release on Issue Close"]
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -13,16 +19,35 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    # Only run if workflow_run was successful or if triggered by tag push/manual dispatch
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      tag_name: ${{ steps.get-tag.outputs.tag_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Tag Name
+        id: get-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # When triggered by workflow_run, get the latest tag
+            TAG_NAME=$(git describe --tags --abbrev=0)
+          else
+            # When triggered by tag push or manual dispatch, use github.ref_name
+            TAG_NAME="${{ github.ref_name }}"
+          fi
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Using tag: $TAG_NAME"
 
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "Release ${{ github.ref_name }}" \
+          gh release create "${{ steps.get-tag.outputs.tag_name }}" \
+            --title "Release ${{ steps.get-tag.outputs.tag_name }}" \
             --generate-notes
 
   build-and-upload:
@@ -53,6 +78,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.tag_name }}
+          fetch-depth: 0
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -275,4 +303,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" "${{ env.ASSET }}" --clobber
+          gh release upload "${{ needs.create-release.outputs.tag_name }}" "${{ env.ASSET }}" --clobber
