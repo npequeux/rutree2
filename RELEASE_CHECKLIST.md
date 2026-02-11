@@ -79,7 +79,7 @@ After the workflow completes (check https://github.com/npequeux/rutree2/actions)
    - rutree2-android-armv7.tar.gz
 4. Test a download URL:
    ```bash
-   curl -I -L https://github.com/npequeux/rutree2/releases/latest/download/rutree2-linux-x86_64.tar.gz
+   wget --spider https://github.com/npequeux/rutree2/releases/latest/download/rutree2-linux-x86_64.tar.gz
    # Should return HTTP 200, not 404
    ```
 
