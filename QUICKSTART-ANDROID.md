@@ -17,6 +17,14 @@ This guide will get you started testing `rutree2` on your Android phone in just 
    # OR for ARMv7 devices (older phones)
    curl -L -o rutree2-android-armv7.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-armv7.tar.gz
    tar -xzf rutree2-android-armv7.tar.gz
+   
+   # OR for x86_64 devices/emulators
+   curl -L -o rutree2-android-x86_64.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-x86_64.tar.gz
+   tar -xzf rutree2-android-x86_64.tar.gz
+   
+   # OR for x86 devices/emulators
+   curl -L -o rutree2-android-x86.tar.gz https://github.com/npequeux/rutree2/releases/latest/download/rutree2-android-x86.tar.gz
+   tar -xzf rutree2-android-x86.tar.gz
    ```
 
 2. **Make it executable and run**:
@@ -119,6 +127,8 @@ uname -m
 
 - `aarch64` → Use `target/aarch64-linux-android/release/rutree2`
 - `armv7l` or `armv8l` → Use `target/armv7-linux-androideabi/release/rutree2`
+- `x86_64` → Use `target/x86_64-linux-android/release/rutree2`
+- `i686` → Use `target/i686-linux-android/release/rutree2`
 
 Most modern Android phones (2016+) use `aarch64`.
 
