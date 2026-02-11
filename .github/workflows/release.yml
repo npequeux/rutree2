@@ -254,16 +254,17 @@ jobs:
 
             echo "✓ Binary is executable"
 
-            # Test binary can be invoked (version check)
+            # Test binary can be invoked (basic functionality test)
+            echo "Testing binary execution..."
             if "$TEST_DIR/rutree2" --version 2>&1 | grep -q "rutree"; then
               echo "✓ Binary runs and reports version"
+            elif "$TEST_DIR/rutree2" --help 2>&1 | head -1 | grep -q "rutree"; then
+              echo "✓ Binary runs (--help works)"
             else
-              # Try with --help instead
-              if "$TEST_DIR/rutree2" --help 2>&1 | head -1 | grep -q "rutree"; then
-                echo "✓ Binary runs (--help works)"
-              else
-                echo "::warning::Binary executes but output verification inconclusive"
-              fi
+              echo "::error::Binary does not execute correctly or produce expected output"
+              echo "::error::Binary should respond to --version or --help flags"
+              rm -rf "$TEST_DIR"
+              exit 1
             fi
 
             # Clean up test directory
