@@ -57,7 +57,7 @@ Pre-built Android binaries are available in [GitHub Releases](https://github.com
    cd ~
    VERSION="v1.0.0"  # Replace with actual version from https://github.com/npequeux/rutree2/releases
    
-   curl -L -f -o rutree2-android-arm64.tar.gz \
+   wget -O rutree2-android-arm64.tar.gz \
      "https://github.com/npequeux/rutree2/releases/download/${VERSION}/rutree2-android-arm64.tar.gz" || \
      { echo "Error: Download failed for version ${VERSION}."; \
        echo "Please check https://github.com/npequeux/rutree2/releases for available versions"; \
