@@ -109,6 +109,12 @@ fn main() {
         }
     }
 
+    // Validate the path exists
+    if !cli.path.exists() {
+        eprintln!("Error: Path '{}' does not exist", cli.path.display());
+        std::process::exit(1);
+    }
+
     match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
         Ok(_) => {}
         Err(e) => {
@@ -187,9 +193,9 @@ fn display_tree(
             let is_last = index == total - 1;
 
             let (connector, new_prefix) = if is_last {
-                ("└── ", format!("{}    ", prefix))
+                (TREE_LAST, format!("{}{}", prefix, TREE_SPACE))
             } else {
-                ("├── ", format!("{}│   ", prefix))
+                (TREE_BRANCH, format!("{}{}", prefix, TREE_VERTICAL))
             };
 
             let name = entry.file_name();
