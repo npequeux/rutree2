@@ -198,7 +198,7 @@ fn display_tree(
             // Get metadata once and reuse it
             let symlink_meta = path.symlink_metadata().ok();
             let is_symlink = symlink_meta.as_ref().is_some_and(|m| m.is_symlink());
-            
+
             // Check if it's a symlink
             let display_name = if is_symlink {
                 // Read the symlink target
