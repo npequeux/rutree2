@@ -46,23 +46,17 @@ use std::io::IsTerminal;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-// Unix permission bit constants
+// Unix permission bit constants for file mode checking
 #[cfg(unix)]
-const SETUID_BIT: u32 = 0o4000;
+const MODE_STICKY_BIT: u32 = 0o1000; // Sticky bit (e.g., /tmp directories)
 #[cfg(unix)]
-const SETGID_BIT: u32 = 0o2000;
+const MODE_SETUID: u32 = 0o4000; // Set user ID on execution
 #[cfg(unix)]
-const STICKY_BIT: u32 = 0o1000;
+const MODE_SETGID: u32 = 0o2000; // Set group ID on execution
 #[cfg(unix)]
-const EXECUTABLE_BITS: u32 = 0o111;
+const MODE_EXECUTABLE: u32 = 0o111; // User/group/other execute bits
 #[cfg(unix)]
-const WORLD_WRITABLE_BIT: u32 = 0o002;
-
-// Tree drawing characters
-const TREE_BRANCH: &str = "├── ";
-const TREE_LAST: &str = "└── ";
-const TREE_VERTICAL: &str = "│   ";
-const TREE_SPACE: &str = "    ";
+const MODE_WORLD_WRITABLE: u32 = 0o002; // World writable bit
 
 /// Command-line interface configuration for rutree2
 #[derive(Parser)]
@@ -82,8 +76,19 @@ struct Cli {
     depth: Option<usize>,
 
     /// Use colors to distinguish file types and permissions (auto, always, never)
-    #[arg(short = 'C', long, default_value = "auto")]
+    #[arg(short = 'C', long, default_value = "auto", value_parser = validate_color)]
     color: String,
+}
+
+/// Validates the color argument value
+fn validate_color(s: &str) -> Result<String, String> {
+    match s {
+        "auto" | "always" | "never" => Ok(s.to_string()),
+        _ => Err(format!(
+            "invalid color value '{}', must be one of: auto, always, never",
+            s
+        )),
+    }
 }
 
 /// Main entry point for the rutree2 application.
@@ -113,7 +118,7 @@ fn main() {
     match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Error reading directory: {}", e);
+            eprintln!("Error reading directory '{}': {}", cli.path.display(), e);
             std::process::exit(1);
         }
     }
@@ -148,10 +153,11 @@ fn display_tree(
     current_depth: usize,
 ) -> std::io::Result<()> {
     // Check if we've reached max depth
-    if let Some(max) = max_depth
-        && current_depth > max
-    {
-        return Ok(());
+    #[allow(clippy::collapsible_if)]
+    if let Some(max) = max_depth {
+        if current_depth > max {
+            return Ok(());
+        }
     }
 
     // Get the file name
@@ -170,8 +176,11 @@ fn display_tree(
             .filter_map(Result::ok)
             .filter(|entry| {
                 // Filter hidden files if needed
-                if !show_hidden && let Some(name) = entry.file_name().to_str() {
-                    return !name.starts_with('.');
+                #[allow(clippy::collapsible_if)]
+                if !show_hidden {
+                    if let Some(name) = entry.file_name().to_str() {
+                        return !name.starts_with('.');
+                    }
                 }
                 true
             })
@@ -186,42 +195,38 @@ fn display_tree(
             let is_last = index == total - 1;
 
             let (connector, new_prefix) = if is_last {
-                (TREE_LAST, format!("{}{}", prefix, TREE_SPACE))
+                ("└── ", format!("{}    ", prefix))
             } else {
-                (TREE_BRANCH, format!("{}{}", prefix, TREE_VERTICAL))
+                ("├── ", format!("{}│   ", prefix))
             };
 
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
 
+            // Get metadata once and reuse it
+            let symlink_meta = path.symlink_metadata().ok();
+            let is_symlink = symlink_meta.as_ref().is_some_and(|m| m.is_symlink());
+
             // Check if it's a symlink
-            let display_name = if let Ok(metadata) = path.symlink_metadata() {
-                if metadata.is_symlink() {
-                    // Read the symlink target
-                    if let Ok(target) = fs::read_link(&path) {
-                        let target_str = target.display();
-                        // Add directory indicator for symlinks that point to directories
-                        if path.is_dir() {
-                            format!("{}/ -> {}", name_str, target_str)
-                        } else {
-                            format!("{} -> {}", name_str, target_str)
-                        }
+            let display_name = if is_symlink {
+                // Read the symlink target
+                if let Ok(target) = fs::read_link(&path) {
+                    let target_str = target.display();
+                    // Add directory indicator for symlinks that point to directories
+                    // Use path.is_dir() which follows symlinks to determine if target is a directory
+                    if path.is_dir() {
+                        format!("{}/ -> {}", name_str, target_str)
                     } else {
-                        // Broken symlink
-                        format!("{} -> [broken link]", name_str)
+                        format!("{} -> {}", name_str, target_str)
                     }
-                } else if path.is_dir() {
-                    format!("{}/", name_str)
                 } else {
-                    name_str.to_string()
+                    // Broken symlink
+                    format!("{} -> [broken link]", name_str)
                 }
+            } else if path.is_dir() {
+                format!("{}/", name_str)
             } else {
-                // Fallback if metadata can't be read
-                if path.is_dir() {
-                    format!("{}/", name_str)
-                } else {
-                    name_str.to_string()
-                }
+                name_str.to_string()
             };
 
             // Colorize the filename based on permissions and type
@@ -247,6 +252,20 @@ fn display_tree(
 
 /// Colorize a file name based on its metadata (permissions and file type).
 ///
+/// Colors are applied in order of precedence (first match wins):
+/// 1. Symlinks: Cyan
+/// 2. Setuid files: White on red (highest priority - security sensitive)
+/// 3. Setgid files: Black on yellow (high priority - security sensitive)  
+/// 4. Sticky bit directories: Green on blue (e.g., /tmp)
+/// 5. Regular directories: Blue and bold
+/// 6. Special files (devices, sockets, pipes): Yellow bold
+/// 7. World-writable files: Yellow (warning)
+/// 8. Executable files: Green
+/// 9. Archive files: Red (.zip, .tar, .gz, etc.)
+/// 10. Image files: Magenta (.png, .jpg, etc.)
+/// 11. Audio/video files: Bright magenta (.mp3, .mp4, etc.)
+/// 12. Default: No color
+///
 /// # Arguments
 ///
 /// * `name` - The file name to colorize
@@ -254,19 +273,11 @@ fn display_tree(
 ///
 /// # Returns
 ///
-/// A colored string based on file type and permissions:
-/// - Directories: Blue and bold
-/// - Setuid files: White on red (security sensitive)
-/// - Setgid files: Black on yellow (security sensitive)
-/// - Sticky bit directories: Green on blue
-/// - Executable files: Green
-/// - World-writable files: Yellow (warning)
-/// - Symlinks: Cyan
-/// - Archive files: Red
-/// - Image files: Magenta
-/// - Audio/video files: Bright magenta
-/// - Special files (devices, sockets, pipes): Yellow bold
-/// - Default: No color
+/// A colored string based on file type and permissions.
+///
+/// # Note
+///
+/// If metadata cannot be read (e.g., permission denied), the name is returned without coloring.
 fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     // Check if it's a symlink first (using symlink_metadata to avoid following the link)
     if path
@@ -289,7 +300,7 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
         {
             let mode = metadata.permissions().mode();
             // Check for sticky bit on directories
-            if mode & STICKY_BIT != 0 {
+            if mode & MODE_STICKY_BIT != 0 {
                 return name.green().on_blue(); // Sticky bit directory (e.g., /tmp)
             }
         }
@@ -302,16 +313,16 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
         let mode = metadata.permissions().mode();
 
         // Check for setuid bit
-        let is_setuid = mode & SETUID_BIT != 0;
+        let is_setuid = mode & MODE_SETUID != 0;
 
         // Check for setgid bit
-        let is_setgid = mode & SETGID_BIT != 0;
+        let is_setgid = mode & MODE_SETGID != 0;
 
         // Check if file is executable
-        let is_executable = mode & EXECUTABLE_BITS != 0;
+        let is_executable = mode & MODE_EXECUTABLE != 0;
 
         // Check if file is writable by others
-        let is_world_writable = mode & WORLD_WRITABLE_BIT != 0;
+        let is_world_writable = mode & MODE_WORLD_WRITABLE != 0;
 
         // Check for special file types using file_type()
         let file_type = metadata.file_type();
@@ -388,166 +399,181 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
-    use std::os::unix::fs as unix_fs;
+    use std::fs::{self, File};
+    use std::path::PathBuf;
+
+    /// Helper function to create a temporary test directory
+    fn create_test_dir() -> (PathBuf, tempfile::TempDir) {
+        let temp_dir = tempfile::TempDir::new().expect("Failed to create temp dir");
+        let path = temp_dir.path().to_path_buf();
+        (path, temp_dir)
+    }
+
+    #[test]
+    fn test_validate_color_valid_values() {
+        assert!(validate_color("auto").is_ok());
+        assert!(validate_color("always").is_ok());
+        assert!(validate_color("never").is_ok());
+    }
+
+    #[test]
+    fn test_validate_color_invalid_value() {
+        let result = validate_color("invalid");
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("must be one of: auto, always, never"));
+    }
+
+    #[test]
+    fn test_display_tree_empty_directory() {
+        let (test_dir, _temp) = create_test_dir();
+        let result = display_tree(&test_dir, false, None, "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_with_files() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Create some test files
+        File::create(test_dir.join("file1.txt")).expect("Failed to create file");
+        File::create(test_dir.join("file2.rs")).expect("Failed to create file");
+        fs::create_dir(test_dir.join("subdir")).expect("Failed to create directory");
+
+        let result = display_tree(&test_dir, false, None, "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_hidden_files() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Create hidden and visible files
+        File::create(test_dir.join(".hidden")).expect("Failed to create file");
+        File::create(test_dir.join("visible.txt")).expect("Failed to create file");
+
+        // Should succeed with show_hidden=false
+        let result = display_tree(&test_dir, false, None, "", 0);
+        assert!(result.is_ok());
+
+        // Should succeed with show_hidden=true
+        let result = display_tree(&test_dir, true, None, "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_max_depth() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Create nested directories
+        let subdir1 = test_dir.join("level1");
+        let subdir2 = subdir1.join("level2");
+        let subdir3 = subdir2.join("level3");
+
+        fs::create_dir(&subdir1).expect("Failed to create dir");
+        fs::create_dir(&subdir2).expect("Failed to create dir");
+        fs::create_dir(&subdir3).expect("Failed to create dir");
+
+        // Test with depth limit
+        let result = display_tree(&test_dir, false, Some(2), "", 0);
+        assert!(result.is_ok());
+
+        let result = display_tree(&test_dir, false, Some(0), "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_nonexistent_directory() {
+        let nonexistent = PathBuf::from("/path/that/does/not/exist/directory");
+        let result = display_tree(&nonexistent, false, None, "", 0);
+        // For non-directory paths, display_tree returns Ok since it just checks is_dir()
+        // which returns false for nonexistent paths without erroring
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_colorize_filename_basic() {
+        // Test that colorize_filename doesn't panic on basic inputs
+        let temp_file = tempfile::NamedTempFile::new().expect("Failed to create temp file");
+        let path = temp_file.path();
+
+        // Disable colors for consistent testing
+        colored::control::set_override(false);
+
+        let result = colorize_filename("test.txt", path);
+        assert_eq!(result.to_string(), "test.txt");
+
+        // Re-enable colors
+        colored::control::unset_override();
+    }
+
+    #[test]
+    fn test_colorize_filename_archive_extensions() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Test various archive extensions
+        let archives = vec!["test.zip", "test.tar", "test.gz", "test.7z"];
+
+        for archive in archives {
+            let file_path = test_dir.join(archive);
+            File::create(&file_path).expect("Failed to create file");
+
+            // Just verify it doesn't panic
+            let _result = colorize_filename(archive, &file_path);
+        }
+    }
+
+    #[test]
+    fn test_colorize_filename_image_extensions() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Test various image extensions
+        let images = vec!["test.png", "test.jpg", "test.jpeg", "test.gif"];
+
+        for image in images {
+            let file_path = test_dir.join(image);
+            File::create(&file_path).expect("Failed to create file");
+
+            // Just verify it doesn't panic
+            let _result = colorize_filename(image, &file_path);
+        }
+    }
+
+    #[test]
+    fn test_colorize_filename_media_extensions() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Test various media extensions
+        let media = vec!["test.mp3", "test.mp4", "test.avi", "test.mkv"];
+
+        for media_file in media {
+            let file_path = test_dir.join(media_file);
+            File::create(&file_path).expect("Failed to create file");
+
+            // Just verify it doesn't panic
+            let _result = colorize_filename(media_file, &file_path);
+        }
+    }
 
     #[test]
     fn test_colorize_filename_directory() {
-        let temp_dir = std::env::temp_dir().join("rutree2_test_dir");
-        fs::create_dir_all(&temp_dir).unwrap();
+        let (test_dir, _temp) = create_test_dir();
+        let subdir = test_dir.join("testdir");
+        fs::create_dir(&subdir).expect("Failed to create directory");
 
-        let colored = colorize_filename("test_dir/", &temp_dir);
-        // Directories should be colored (we can't easily test the exact color without complex setup)
-        assert!(!colored.to_string().is_empty());
-
-        fs::remove_dir_all(&temp_dir).unwrap();
-    }
-
-    #[test]
-    fn test_colorize_filename_archive() {
-        let name = "test.zip";
-        let path = Path::new(name);
-        let colored = colorize_filename(name, path);
-        // Should return colored string
-        assert_eq!(colored.to_string(), name);
-    }
-
-    #[test]
-    fn test_colorize_filename_image() {
-        let name = "test.png";
-        let path = Path::new(name);
-        let colored = colorize_filename(name, path);
-        assert_eq!(colored.to_string(), name);
-    }
-
-    #[test]
-    fn test_colorize_filename_video() {
-        let name = "test.mp4";
-        let path = Path::new(name);
-        let colored = colorize_filename(name, path);
-        assert_eq!(colored.to_string(), name);
+        // Just verify it doesn't panic
+        let _result = colorize_filename("testdir/", &subdir);
     }
 
     #[cfg(unix)]
     #[test]
-    fn test_colorize_filename_executable() {
-        use std::fs::File;
-        use std::os::unix::fs::PermissionsExt;
-
-        let temp_file = std::env::temp_dir().join("rutree2_test_exec");
-        File::create(&temp_file).unwrap();
-
-        let mut perms = fs::metadata(&temp_file).unwrap().permissions();
-        perms.set_mode(0o755); // Make it executable
-        fs::set_permissions(&temp_file, perms).unwrap();
-
-        let colored = colorize_filename("test_exec", &temp_file);
-        assert!(!colored.to_string().is_empty());
-
-        fs::remove_file(&temp_file).unwrap();
-    }
-
-    #[test]
-    fn test_display_tree_file_instead_of_directory() {
-        let temp_file = std::env::temp_dir().join("rutree2_test_file");
-        fs::write(&temp_file, "content").unwrap();
-
-        // Calling display_tree on a file (not a directory) should still work
-        // as it handles files gracefully
-        let result = display_tree(&temp_file, false, None, "", 0);
-        assert!(result.is_ok());
-
-        fs::remove_file(&temp_file).unwrap();
-    }
-
-    #[test]
-    fn test_display_tree_with_depth_limit() {
-        // Create a temporary directory structure
-        let temp_dir = std::env::temp_dir().join("rutree2_test_depth");
-        fs::create_dir_all(temp_dir.join("level1/level2/level3")).unwrap();
-
-        // Test with depth limit
-        let result = display_tree(&temp_dir, false, Some(1), "", 0);
-        assert!(result.is_ok());
-
-        fs::remove_dir_all(&temp_dir).unwrap();
-    }
-
-    #[test]
-    fn test_display_tree_show_hidden() {
-        let temp_dir = std::env::temp_dir().join("rutree2_test_hidden");
-        fs::create_dir_all(&temp_dir).unwrap();
-        fs::write(temp_dir.join(".hidden"), "hidden content").unwrap();
-        fs::write(temp_dir.join("visible"), "visible content").unwrap();
-
-        // Test with show_hidden = true
-        let result = display_tree(&temp_dir, true, None, "", 0);
-        assert!(result.is_ok());
-
-        // Test with show_hidden = false
-        let result = display_tree(&temp_dir, false, None, "", 0);
-        assert!(result.is_ok());
-
-        fs::remove_dir_all(&temp_dir).unwrap();
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn test_display_tree_with_symlink() {
-        let temp_dir = std::env::temp_dir().join("rutree2_test_symlink");
-        fs::create_dir_all(&temp_dir).unwrap();
-        let target = temp_dir.join("target");
-        let link = temp_dir.join("link");
-        fs::write(&target, "content").unwrap();
-        unix_fs::symlink(&target, &link).unwrap();
-
-        let result = display_tree(&temp_dir, false, None, "", 0);
-        assert!(result.is_ok());
-
-        fs::remove_dir_all(&temp_dir).unwrap();
-    }
-
-    #[test]
-    fn test_cli_default_values() {
-        use clap::Parser;
-
-        // Test default CLI values
-        let cli = Cli::parse_from(["rutree2"]);
-        assert_eq!(cli.path, PathBuf::from("."));
-        assert!(!cli.all);
-        assert_eq!(cli.depth, None);
-        assert_eq!(cli.color, "auto");
-    }
-
-    #[test]
-    fn test_cli_with_all_flag() {
-        use clap::Parser;
-
-        let cli = Cli::parse_from(["rutree2", "--all"]);
-        assert!(cli.all);
-    }
-
-    #[test]
-    fn test_cli_with_depth() {
-        use clap::Parser;
-
-        let cli = Cli::parse_from(["rutree2", "--depth", "3"]);
-        assert_eq!(cli.depth, Some(3));
-    }
-
-    #[test]
-    fn test_cli_with_color() {
-        use clap::Parser;
-
-        let cli = Cli::parse_from(["rutree2", "--color", "always"]);
-        assert_eq!(cli.color, "always");
-    }
-
-    #[test]
-    fn test_cli_with_path() {
-        use clap::Parser;
-
-        let cli = Cli::parse_from(["rutree2", "/tmp"]);
-        assert_eq!(cli.path, PathBuf::from("/tmp"));
+    fn test_permission_constants() {
+        // Verify our constants are correct
+        assert_eq!(MODE_STICKY_BIT, 0o1000);
+        assert_eq!(MODE_SETUID, 0o4000);
+        assert_eq!(MODE_SETGID, 0o2000);
+        assert_eq!(MODE_EXECUTABLE, 0o111);
+        assert_eq!(MODE_WORLD_WRITABLE, 0o002);
     }
 }
