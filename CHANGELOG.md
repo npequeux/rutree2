@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-02-17
+
+### Changed
+- Fix: repair block structure, delimiters, and interactive tree constants. All tests passing. ([20a9027](https://github.com/npequeux/rutree2/commit/20a90278899bf60b906baf0252fa3fce4470ea7e))
+
 ## [1.4.0] - 2026-02-17
 
 ### Changed
