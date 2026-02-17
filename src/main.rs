@@ -39,13 +39,24 @@
 //! ```
 
 use clap::Parser;
-use colored::*;
+use colored::{Colorize as ColoredColorize, ColoredString};
 use std::fs;
 use std::io::IsTerminal;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
+// For interactive mode
+use ratatui::prelude::*;
+use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
+use crossterm::event::{self, Event, KeyCode};
+use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
+use std::time::Duration;
+// Tree drawing constants for interactive mode
+const TREE_LAST: &str = "└── ";
+const TREE_BRANCH: &str = "├── ";
+const TREE_SPACE: &str = "    ";
+const TREE_VERTICAL: &str = "│   ";
 // Unix permission bit constants for file mode checking
 #[cfg(unix)]
 const MODE_STICKY_BIT: u32 = 0o1000; // Sticky bit (e.g., /tmp directories)
@@ -78,6 +89,10 @@ struct Cli {
     /// Use colors to distinguish file types and permissions (auto, always, never)
     #[arg(short = 'C', long, default_value = "auto", value_parser = validate_color)]
     color: String,
+
+    /// Interactive collapsible/expandable tree view
+    #[arg(short = 'i', long, help = "Interactive collapsible/expandable tree view")]
+    interactive: bool,
 }
 
 /// Validates the color argument value
@@ -115,11 +130,173 @@ fn main() {
         std::process::exit(1);
     }
 
-    match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
-        Ok(_) => {}
-        Err(e) => {
-            eprintln!("Error reading directory '{}': {}", cli.path.display(), e);
+    if cli.interactive {
+        if let Err(e) = interactive_tree(&cli.path, cli.all, cli.depth) {
+            eprintln!("Interactive mode error: {}", e);
             std::process::exit(1);
+        }
+    } else {
+        match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error reading directory '{}': {}", cli.path.display(), e);
+                std::process::exit(1);
+            }
+            }
+        }
+    }
+
+
+/// Interactive collapsible/expandable tree using ratatui
+fn interactive_tree(path: &Path, show_hidden: bool, max_depth: Option<usize>) -> std::io::Result<()> {
+    enable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    crossterm::execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
+    let backend = ratatui::backend::CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    // Build initial tree state
+    let tree = TreeNode::from_path(path, show_hidden, max_depth, 0)?;
+    let mut state = ListState::default();
+    state.select(Some(0));
+
+    let mut flat = tree.flatten();
+
+    loop {
+        terminal.draw(|f| {
+            let size = f.area();
+            let items: Vec<ListItem> = flat.iter().map(|(prefix, node)| {
+                let mut label = format!("{}{}", prefix, node.display_name());
+                if node.is_dir && !node.expanded {
+                    label.push_str(" [+]");
+                } else if node.is_dir && node.expanded {
+                    label.push_str(" [-]");
+                }
+                ListItem::new(label)
+            }).collect();
+            let list = List::new(items).block(Block::default().borders(Borders::ALL).title("rutree2 (interactive)"));
+            f.render_stateful_widget(list, size, &mut state);
+        })?;
+
+        if event::poll(Duration::from_millis(200))? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Down => {
+                        let sel = state.selected().unwrap_or(0);
+                        if sel + 1 < flat.len() {
+                            state.select(Some(sel + 1));
+                        }
+                    }
+                    KeyCode::Up => {
+                        let sel = state.selected().unwrap_or(0);
+                        if sel > 0 {
+                            state.select(Some(sel - 1));
+                        }
+                    }
+                    KeyCode::Right | KeyCode::Enter => {
+                        let sel = state.selected().unwrap_or(0);
+                        if let Some((_, node)) = flat.get_mut(sel) {
+                            if node.is_dir && !node.expanded {
+                                node.expanded = true;
+                                flat = tree.flatten();
+                                state.select(Some(sel));
+                            }
+                        }
+                    }
+                    KeyCode::Left => {
+                        let sel = state.selected().unwrap_or(0);
+                        if let Some((_, node)) = flat.get_mut(sel) {
+                            if node.is_dir && node.expanded {
+                                node.expanded = false;
+                                flat = tree.flatten();
+                                state.select(Some(sel));
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    disable_raw_mode()?;
+    crossterm::execute!(std::io::stdout(), crossterm::terminal::LeaveAlternateScreen)?;
+    Ok(())
+}
+
+/// Tree node for interactive mode
+#[derive(Debug, Clone)]
+struct TreeNode {
+    name: String,
+    is_dir: bool,
+    expanded: bool,
+    children: Vec<TreeNode>,
+    depth: usize,
+}
+
+impl TreeNode {
+    fn from_path(path: &Path, show_hidden: bool, max_depth: Option<usize>, depth: usize) -> std::io::Result<Self> {
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or(".").to_string();
+        let is_dir = path.is_dir();
+        let mut node = TreeNode {
+            name,
+            is_dir,
+            expanded: depth == 0, // root expanded
+            children: vec![],
+            depth,
+        };
+        if is_dir && (max_depth.map_or(true, |m| depth < m)) {
+            let mut entries: Vec<_> = fs::read_dir(path)?
+                .filter_map(Result::ok)
+                .filter(|entry| {
+                    if !show_hidden {
+                        if let Some(name) = entry.file_name().to_str() {
+                            return !name.starts_with('.');
+                        }
+                    }
+                    true
+                })
+                .collect();
+            entries.sort_by_key(|entry| entry.file_name());
+            for entry in entries {
+                let child = TreeNode::from_path(&entry.path(), show_hidden, max_depth, depth + 1)?;
+                node.children.push(child);
+            }
+        }
+        Ok(node)
+    }
+
+    fn display_name(&self) -> String {
+        if self.is_dir {
+            format!("{}/", self.name)
+        } else {
+            self.name.clone()
+        }
+    }
+
+    /// Flatten the tree for display, returning (prefix, &TreeNode)
+    fn flatten(&self) -> Vec<(String, TreeNode)> {
+        let mut out = vec![];
+        self.flatten_inner("", &mut out, true);
+        out
+    }
+
+    fn flatten_inner(&self, prefix: &str, out: &mut Vec<(String, TreeNode)>, is_last: bool) {
+        let mut this_prefix = prefix.to_string();
+        if self.depth > 0 {
+            this_prefix += if is_last { TREE_LAST } else { TREE_BRANCH };
+        }
+        out.push((this_prefix.clone(), self.clone()));
+        if self.is_dir && self.expanded {
+            let n = self.children.len();
+            for (i, child) in self.children.iter().enumerate() {
+                let mut child_prefix = prefix.to_string();
+                if self.depth > 0 {
+                    child_prefix += if is_last { TREE_SPACE } else { TREE_VERTICAL };
+                }
+                child.flatten_inner(&child_prefix, out, i == n - 1);
+            }
         }
     }
 }
@@ -285,7 +462,7 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
         .map(|m| m.is_symlink())
         .unwrap_or(false)
     {
-        return name.cyan();
+        return <&str as ColoredCompat>::colored_cyan(name);
     }
 
     // Try to get metadata for the path (follows symlinks if present)
@@ -301,94 +478,75 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
             let mode = metadata.permissions().mode();
             // Check for sticky bit on directories
             if mode & MODE_STICKY_BIT != 0 {
-                return name.green().on_blue(); // Sticky bit directory (e.g., /tmp)
+                return <&str as ColoredCompat>::colored_green(name).on_blue(); // Sticky bit directory (e.g., /tmp)
             }
         }
-        return name.blue().bold();
+        return <&str as ColoredCompat>::colored_blue(name).bold();
     }
 
-    // Get file permissions (Unix-specific)
-    #[cfg(unix)]
-    {
-        let mode = metadata.permissions().mode();
 
+    #[cfg(unix)] {
+        let mode = metadata.permissions().mode();
         // Check for setuid bit
         let is_setuid = mode & MODE_SETUID != 0;
-
         // Check for setgid bit
         let is_setgid = mode & MODE_SETGID != 0;
-
         // Check if file is executable
         let is_executable = mode & MODE_EXECUTABLE != 0;
-
         // Check if file is writable by others
         let is_world_writable = mode & MODE_WORLD_WRITABLE != 0;
-
         // Check for special file types using file_type()
         let file_type = metadata.file_type();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::FileTypeExt;
-
-            // Character or block devices
-            if file_type.is_char_device() || file_type.is_block_device() {
-                return name.yellow().bold();
-            }
-
-            // Socket or FIFO (named pipe)
-            if file_type.is_socket() || file_type.is_fifo() {
-                return name.yellow();
-            }
+        use std::os::unix::fs::FileTypeExt;
+        // Character or block devices
+        if file_type.is_char_device() || file_type.is_block_device() {
+            return <&str as ColoredCompat>::colored_yellow(name).bold();
         }
-
+        // Socket or FIFO (named pipe)
+        if file_type.is_socket() || file_type.is_fifo() {
+            return <&str as ColoredCompat>::colored_yellow(name);
+        }
         // Setuid files (highest priority - security sensitive)
         if is_setuid {
-            return name.white().on_red(); // White text on red background
+            return <&str as ColoredCompat>::colored_white(name).on_red(); // White text on red background
         }
-
         // Setgid files (high priority - security sensitive)
         if is_setgid {
-            return name.black().on_yellow(); // Black text on yellow background
+            return <&str as ColoredCompat>::colored_black(name).on_yellow(); // Black text on yellow background
         }
-
         // World-writable files (warning)
         if is_world_writable {
-            return name.yellow();
+            return <&str as ColoredCompat>::colored_yellow(name);
         }
-
         // Executable files
         if is_executable {
-            return name.green();
+            return <&str as ColoredCompat>::colored_green(name);
         }
     }
 
     // Check file extension for type-based coloring
     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
         let ext_lower = ext.to_lowercase();
-
         // Archive files
         if matches!(
             ext_lower.as_str(),
             "zip" | "tar" | "gz" | "bz2" | "xz" | "7z" | "rar" | "tgz" | "tbz2" | "txz"
         ) {
-            return name.red();
+            return <&str as ColoredCompat>::colored_red(name);
         }
-
         // Image files
         if matches!(
             ext_lower.as_str(),
             "png" | "jpg" | "jpeg" | "gif" | "bmp" | "svg" | "ico" | "webp" | "tiff" | "tif"
         ) {
-            return name.magenta();
+            return <&str as ColoredCompat>::colored_magenta(name);
         }
-
         // Audio/video files
         if matches!(
             ext_lower.as_str(),
             "mp3" | "mp4" | "avi" | "mkv" | "flac" | "wav" | "ogg" | "mov" | "wmv" | "webm" | "m4a"
         ) {
-            return name.bright_magenta();
+            return <&str as ColoredCompat>::colored_bright_magenta(name);
         }
     }
 
@@ -396,8 +554,41 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     name.normal()
 }
 
+// Disambiguate colored methods
+trait ColoredCompat {
+    fn colored_cyan(s: &str) -> ColoredString;
+    fn colored_green(s: &str) -> ColoredString;
+    fn colored_blue(s: &str) -> ColoredString;
+    fn colored_yellow(s: &str) -> ColoredString;
+    fn colored_white(s: &str) -> ColoredString;
+    fn colored_black(s: &str) -> ColoredString;
+    fn colored_red(s: &str) -> ColoredString;
+    fn colored_magenta(s: &str) -> ColoredString;
+    fn colored_bright_magenta(s: &str) -> ColoredString;
+}
+
+impl ColoredCompat for &str {
+    fn colored_cyan(s: &str) -> ColoredString { colored::Colorize::cyan(s) }
+    fn colored_green(s: &str) -> ColoredString { colored::Colorize::green(s) }
+    fn colored_blue(s: &str) -> ColoredString { colored::Colorize::blue(s) }
+    fn colored_yellow(s: &str) -> ColoredString { colored::Colorize::yellow(s) }
+    fn colored_white(s: &str) -> ColoredString { colored::Colorize::white(s) }
+    fn colored_black(s: &str) -> ColoredString { colored::Colorize::black(s) }
+    fn colored_red(s: &str) -> ColoredString { colored::Colorize::red(s) }
+    fn colored_magenta(s: &str) -> ColoredString { colored::Colorize::magenta(s) }
+    fn colored_bright_magenta(s: &str) -> ColoredString { colored::Colorize::bright_magenta(s) }
+}
+
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn test_cli_interactive_flag() {
+        use clap::Parser;
+        let cli = Cli::parse_from(["rutree2", "-i"]);
+        assert!(cli.interactive);
+    }
+
     use super::*;
     use std::fs::{self, File};
     use std::path::PathBuf;

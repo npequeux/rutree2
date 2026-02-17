@@ -188,6 +188,23 @@ Symbolic links are displayed with a `->` indicator showing the target. Directory
 
 In this example, `shortcuts/` is a symbolic link pointing to the `docs` directory, and the tree follows the link to show its contents.
 
+## Interactive Mode
+
+rutree2 now supports an interactive, collapsible/expandable tree view in the terminal!
+
+- Use the `-i` or `--interactive` flag to launch the interactive mode:
+
+```bash
+rutree2 -i
+```
+
+- In interactive mode, you can:
+  - Expand/collapse directories with the arrow keys
+  - Navigate the tree interactively
+  - Quit with `q`
+
+This feature is powered by the `ratatui` and `crossterm` crates for a modern TUI experience.
+
 ## License
 
 MIT License - see LICENSE file for details
