@@ -49,9 +49,9 @@ jobs:
           echo "Current version: $CURRENT_VERSION"
 
           # Parse version components
-          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
-          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
-          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+          MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT_VERSION" | cut -d. -f3)
 
           # Determine version bump type from commit message
           # Default to minor bump as per requirements
@@ -85,9 +85,9 @@ jobs:
           NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
           echo "New version: $NEW_VERSION"
 
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "bump_type=$BUMP_TYPE" >> "$GITHUB_OUTPUT"
 
       - name: Update Cargo.toml
         run: |
@@ -121,7 +121,7 @@ jobs:
           # Get current date
           RELEASE_DATE=$(date +%Y-%m-%d)
           NEW_VERSION="${{ steps.version.outputs.new_version }}"
-          
+
           # Get first line of commit message (title)
           COMMIT_TITLE=$(echo "$COMMIT_MESSAGE" | head -1)
 
@@ -142,7 +142,7 @@ jobs:
               # Insert before the first version entry
               head -n $((LINE_NUM - 1)) CHANGELOG.md > /tmp/changelog_new.md
               cat /tmp/changelog_entry.md >> /tmp/changelog_new.md
-              tail -n +$LINE_NUM CHANGELOG.md >> /tmp/changelog_new.md
+              tail -n +"$LINE_NUM" CHANGELOG.md >> /tmp/changelog_new.md
               mv /tmp/changelog_new.md CHANGELOG.md
             else
               # No existing entries, append to the end
