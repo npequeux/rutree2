@@ -195,34 +195,30 @@ fn display_tree(
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
 
+            // Get metadata once and reuse it
+            let symlink_meta = path.symlink_metadata().ok();
+            let is_symlink = symlink_meta.as_ref().is_some_and(|m| m.is_symlink());
+            
             // Check if it's a symlink
-            let display_name = if let Ok(metadata) = path.symlink_metadata() {
-                if metadata.is_symlink() {
-                    // Read the symlink target
-                    if let Ok(target) = fs::read_link(&path) {
-                        let target_str = target.display();
-                        // Add directory indicator for symlinks that point to directories
-                        if path.is_dir() {
-                            format!("{}/ -> {}", name_str, target_str)
-                        } else {
-                            format!("{} -> {}", name_str, target_str)
-                        }
+            let display_name = if is_symlink {
+                // Read the symlink target
+                if let Ok(target) = fs::read_link(&path) {
+                    let target_str = target.display();
+                    // Add directory indicator for symlinks that point to directories
+                    // Use path.is_dir() which follows symlinks to determine if target is a directory
+                    if path.is_dir() {
+                        format!("{}/ -> {}", name_str, target_str)
                     } else {
-                        // Broken symlink
-                        format!("{} -> [broken link]", name_str)
+                        format!("{} -> {}", name_str, target_str)
                     }
-                } else if path.is_dir() {
-                    format!("{}/", name_str)
                 } else {
-                    name_str.to_string()
+                    // Broken symlink
+                    format!("{} -> [broken link]", name_str)
                 }
+            } else if path.is_dir() {
+                format!("{}/", name_str)
             } else {
-                // Fallback if metadata can't be read
-                if path.is_dir() {
-                    format!("{}/", name_str)
-                } else {
-                    name_str.to_string()
-                }
+                name_str.to_string()
             };
 
             // Colorize the filename based on permissions and type
