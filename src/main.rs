@@ -46,6 +46,24 @@ use std::io::IsTerminal;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
+// Unix permission bit constants
+#[cfg(unix)]
+const SETUID_BIT: u32 = 0o4000;
+#[cfg(unix)]
+const SETGID_BIT: u32 = 0o2000;
+#[cfg(unix)]
+const STICKY_BIT: u32 = 0o1000;
+#[cfg(unix)]
+const EXECUTABLE_BITS: u32 = 0o111;
+#[cfg(unix)]
+const WORLD_WRITABLE_BIT: u32 = 0o002;
+
+// Tree drawing characters
+const TREE_BRANCH: &str = "├── ";
+const TREE_LAST: &str = "└── ";
+const TREE_VERTICAL: &str = "│   ";
+const TREE_SPACE: &str = "    ";
+
 /// Command-line interface configuration for rutree2
 #[derive(Parser)]
 #[command(name = "rutree2")]
@@ -86,10 +104,16 @@ fn main() {
         }
     }
 
+    // Validate the path exists
+    if !cli.path.exists() {
+        eprintln!("Error: Path '{}' does not exist", cli.path.display());
+        std::process::exit(1);
+    }
+
     match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Error: {}", e);
+            eprintln!("Error reading directory: {}", e);
             std::process::exit(1);
         }
     }
@@ -162,9 +186,9 @@ fn display_tree(
             let is_last = index == total - 1;
 
             let (connector, new_prefix) = if is_last {
-                ("└── ", format!("{}    ", prefix))
+                (TREE_LAST, format!("{}{}", prefix, TREE_SPACE))
             } else {
-                ("├── ", format!("{}│   ", prefix))
+                (TREE_BRANCH, format!("{}{}", prefix, TREE_VERTICAL))
             };
 
             let name = entry.file_name();
@@ -264,8 +288,8 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
         #[cfg(unix)]
         {
             let mode = metadata.permissions().mode();
-            // Check for sticky bit (0o1000) on directories
-            if mode & 0o1000 != 0 {
+            // Check for sticky bit on directories
+            if mode & STICKY_BIT != 0 {
                 return name.green().on_blue(); // Sticky bit directory (e.g., /tmp)
             }
         }
@@ -277,17 +301,17 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     {
         let mode = metadata.permissions().mode();
 
-        // Check for setuid bit (0o4000)
-        let is_setuid = mode & 0o4000 != 0;
+        // Check for setuid bit
+        let is_setuid = mode & SETUID_BIT != 0;
 
-        // Check for setgid bit (0o2000)
-        let is_setgid = mode & 0o2000 != 0;
+        // Check for setgid bit
+        let is_setgid = mode & SETGID_BIT != 0;
 
-        // Check if file is executable (0o111 = user/group/other execute bits)
-        let is_executable = mode & 0o111 != 0;
+        // Check if file is executable
+        let is_executable = mode & EXECUTABLE_BITS != 0;
 
-        // Check if file is writable by others (0o002 = other write bit)
-        let is_world_writable = mode & 0o002 != 0;
+        // Check if file is writable by others
+        let is_world_writable = mode & WORLD_WRITABLE_BIT != 0;
 
         // Check for special file types using file_type()
         let file_type = metadata.file_type();
@@ -359,4 +383,171 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
 
     // Default: no special color
     name.normal()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::os::unix::fs as unix_fs;
+
+    #[test]
+    fn test_colorize_filename_directory() {
+        let temp_dir = std::env::temp_dir().join("rutree2_test_dir");
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let colored = colorize_filename("test_dir/", &temp_dir);
+        // Directories should be colored (we can't easily test the exact color without complex setup)
+        assert!(!colored.to_string().is_empty());
+
+        fs::remove_dir_all(&temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_colorize_filename_archive() {
+        let name = "test.zip";
+        let path = Path::new(name);
+        let colored = colorize_filename(name, path);
+        // Should return colored string
+        assert_eq!(colored.to_string(), name);
+    }
+
+    #[test]
+    fn test_colorize_filename_image() {
+        let name = "test.png";
+        let path = Path::new(name);
+        let colored = colorize_filename(name, path);
+        assert_eq!(colored.to_string(), name);
+    }
+
+    #[test]
+    fn test_colorize_filename_video() {
+        let name = "test.mp4";
+        let path = Path::new(name);
+        let colored = colorize_filename(name, path);
+        assert_eq!(colored.to_string(), name);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_colorize_filename_executable() {
+        use std::fs::File;
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp_file = std::env::temp_dir().join("rutree2_test_exec");
+        File::create(&temp_file).unwrap();
+
+        let mut perms = fs::metadata(&temp_file).unwrap().permissions();
+        perms.set_mode(0o755); // Make it executable
+        fs::set_permissions(&temp_file, perms).unwrap();
+
+        let colored = colorize_filename("test_exec", &temp_file);
+        assert!(!colored.to_string().is_empty());
+
+        fs::remove_file(&temp_file).unwrap();
+    }
+
+    #[test]
+    fn test_display_tree_file_instead_of_directory() {
+        let temp_file = std::env::temp_dir().join("rutree2_test_file");
+        fs::write(&temp_file, "content").unwrap();
+
+        // Calling display_tree on a file (not a directory) should still work
+        // as it handles files gracefully
+        let result = display_tree(&temp_file, false, None, "", 0);
+        assert!(result.is_ok());
+
+        fs::remove_file(&temp_file).unwrap();
+    }
+
+    #[test]
+    fn test_display_tree_with_depth_limit() {
+        // Create a temporary directory structure
+        let temp_dir = std::env::temp_dir().join("rutree2_test_depth");
+        fs::create_dir_all(temp_dir.join("level1/level2/level3")).unwrap();
+
+        // Test with depth limit
+        let result = display_tree(&temp_dir, false, Some(1), "", 0);
+        assert!(result.is_ok());
+
+        fs::remove_dir_all(&temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_display_tree_show_hidden() {
+        let temp_dir = std::env::temp_dir().join("rutree2_test_hidden");
+        fs::create_dir_all(&temp_dir).unwrap();
+        fs::write(temp_dir.join(".hidden"), "hidden content").unwrap();
+        fs::write(temp_dir.join("visible"), "visible content").unwrap();
+
+        // Test with show_hidden = true
+        let result = display_tree(&temp_dir, true, None, "", 0);
+        assert!(result.is_ok());
+
+        // Test with show_hidden = false
+        let result = display_tree(&temp_dir, false, None, "", 0);
+        assert!(result.is_ok());
+
+        fs::remove_dir_all(&temp_dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_display_tree_with_symlink() {
+        let temp_dir = std::env::temp_dir().join("rutree2_test_symlink");
+        fs::create_dir_all(&temp_dir).unwrap();
+        let target = temp_dir.join("target");
+        let link = temp_dir.join("link");
+        fs::write(&target, "content").unwrap();
+        unix_fs::symlink(&target, &link).unwrap();
+
+        let result = display_tree(&temp_dir, false, None, "", 0);
+        assert!(result.is_ok());
+
+        fs::remove_dir_all(&temp_dir).unwrap();
+    }
+
+    #[test]
+    fn test_cli_default_values() {
+        use clap::Parser;
+
+        // Test default CLI values
+        let cli = Cli::parse_from(["rutree2"]);
+        assert_eq!(cli.path, PathBuf::from("."));
+        assert!(!cli.all);
+        assert_eq!(cli.depth, None);
+        assert_eq!(cli.color, "auto");
+    }
+
+    #[test]
+    fn test_cli_with_all_flag() {
+        use clap::Parser;
+
+        let cli = Cli::parse_from(["rutree2", "--all"]);
+        assert!(cli.all);
+    }
+
+    #[test]
+    fn test_cli_with_depth() {
+        use clap::Parser;
+
+        let cli = Cli::parse_from(["rutree2", "--depth", "3"]);
+        assert_eq!(cli.depth, Some(3));
+    }
+
+    #[test]
+    fn test_cli_with_color() {
+        use clap::Parser;
+
+        let cli = Cli::parse_from(["rutree2", "--color", "always"]);
+        assert_eq!(cli.color, "always");
+    }
+
+    #[test]
+    fn test_cli_with_path() {
+        use clap::Parser;
+
+        let cli = Cli::parse_from(["rutree2", "/tmp"]);
+        assert_eq!(cli.path, PathBuf::from("/tmp"));
+    }
 }
