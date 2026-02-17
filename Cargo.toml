@@ -11,3 +11,6 @@ homepage = "https://npequeux.github.io/rutree2"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 colored = "3.1"
+
+[dev-dependencies]
+tempfile = "3.9"

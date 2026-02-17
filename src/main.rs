@@ -391,3 +391,185 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     // Default: no special color
     name.normal()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::{self, File};
+    use std::path::PathBuf;
+
+    /// Helper function to create a temporary test directory
+    fn create_test_dir() -> (PathBuf, tempfile::TempDir) {
+        let temp_dir = tempfile::TempDir::new().expect("Failed to create temp dir");
+        let path = temp_dir.path().to_path_buf();
+        (path, temp_dir)
+    }
+
+    #[test]
+    fn test_validate_color_valid_values() {
+        assert!(validate_color("auto").is_ok());
+        assert!(validate_color("always").is_ok());
+        assert!(validate_color("never").is_ok());
+    }
+
+    #[test]
+    fn test_validate_color_invalid_value() {
+        let result = validate_color("invalid");
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("must be one of: auto, always, never"));
+    }
+
+    #[test]
+    fn test_display_tree_empty_directory() {
+        let (test_dir, _temp) = create_test_dir();
+        let result = display_tree(&test_dir, false, None, "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_with_files() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Create some test files
+        File::create(test_dir.join("file1.txt")).expect("Failed to create file");
+        File::create(test_dir.join("file2.rs")).expect("Failed to create file");
+        fs::create_dir(test_dir.join("subdir")).expect("Failed to create directory");
+
+        let result = display_tree(&test_dir, false, None, "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_hidden_files() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Create hidden and visible files
+        File::create(test_dir.join(".hidden")).expect("Failed to create file");
+        File::create(test_dir.join("visible.txt")).expect("Failed to create file");
+
+        // Should succeed with show_hidden=false
+        let result = display_tree(&test_dir, false, None, "", 0);
+        assert!(result.is_ok());
+
+        // Should succeed with show_hidden=true
+        let result = display_tree(&test_dir, true, None, "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_max_depth() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Create nested directories
+        let subdir1 = test_dir.join("level1");
+        let subdir2 = subdir1.join("level2");
+        let subdir3 = subdir2.join("level3");
+
+        fs::create_dir(&subdir1).expect("Failed to create dir");
+        fs::create_dir(&subdir2).expect("Failed to create dir");
+        fs::create_dir(&subdir3).expect("Failed to create dir");
+
+        // Test with depth limit
+        let result = display_tree(&test_dir, false, Some(2), "", 0);
+        assert!(result.is_ok());
+
+        let result = display_tree(&test_dir, false, Some(0), "", 0);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_display_tree_nonexistent_directory() {
+        let nonexistent = PathBuf::from("/path/that/does/not/exist/directory");
+        let result = display_tree(&nonexistent, false, None, "", 0);
+        // For non-directory paths, display_tree returns Ok since it just checks is_dir()
+        // which returns false for nonexistent paths without erroring
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_colorize_filename_basic() {
+        // Test that colorize_filename doesn't panic on basic inputs
+        let temp_file = tempfile::NamedTempFile::new().expect("Failed to create temp file");
+        let path = temp_file.path();
+
+        // Disable colors for consistent testing
+        colored::control::set_override(false);
+
+        let result = colorize_filename("test.txt", path);
+        assert_eq!(result.to_string(), "test.txt");
+
+        // Re-enable colors
+        colored::control::unset_override();
+    }
+
+    #[test]
+    fn test_colorize_filename_archive_extensions() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Test various archive extensions
+        let archives = vec!["test.zip", "test.tar", "test.gz", "test.7z"];
+
+        for archive in archives {
+            let file_path = test_dir.join(archive);
+            File::create(&file_path).expect("Failed to create file");
+
+            // Just verify it doesn't panic
+            let _result = colorize_filename(archive, &file_path);
+        }
+    }
+
+    #[test]
+    fn test_colorize_filename_image_extensions() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Test various image extensions
+        let images = vec!["test.png", "test.jpg", "test.jpeg", "test.gif"];
+
+        for image in images {
+            let file_path = test_dir.join(image);
+            File::create(&file_path).expect("Failed to create file");
+
+            // Just verify it doesn't panic
+            let _result = colorize_filename(image, &file_path);
+        }
+    }
+
+    #[test]
+    fn test_colorize_filename_media_extensions() {
+        let (test_dir, _temp) = create_test_dir();
+
+        // Test various media extensions
+        let media = vec!["test.mp3", "test.mp4", "test.avi", "test.mkv"];
+
+        for media_file in media {
+            let file_path = test_dir.join(media_file);
+            File::create(&file_path).expect("Failed to create file");
+
+            // Just verify it doesn't panic
+            let _result = colorize_filename(media_file, &file_path);
+        }
+    }
+
+    #[test]
+    fn test_colorize_filename_directory() {
+        let (test_dir, _temp) = create_test_dir();
+        let subdir = test_dir.join("testdir");
+        fs::create_dir(&subdir).expect("Failed to create directory");
+
+        // Just verify it doesn't panic
+        let _result = colorize_filename("testdir/", &subdir);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_permission_constants() {
+        // Verify our constants are correct
+        assert_eq!(MODE_STICKY_BIT, 0o1000);
+        assert_eq!(MODE_SETUID, 0o4000);
+        assert_eq!(MODE_SETGID, 0o2000);
+        assert_eq!(MODE_EXECUTABLE, 0o111);
+        assert_eq!(MODE_WORLD_WRITABLE, 0o002);
+    }
+}
