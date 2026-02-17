@@ -20,7 +20,7 @@ If no proper versioned release exists yet, use **Option B to build from source**
    # Replace VERSION with the actual version (e.g., v1.0.0)
    VERSION="v1.0.0"  # Check https://github.com/npequeux/rutree2/releases for the latest version
    
-   curl -L -f -o rutree2-android-arm64.tar.gz \
+   wget -O rutree2-android-arm64.tar.gz \
      "https://github.com/npequeux/rutree2/releases/download/${VERSION}/rutree2-android-arm64.tar.gz" || \
      { echo "Error: Download failed for version ${VERSION}."; \
        echo "Please check https://github.com/npequeux/rutree2/releases for available versions"; \
@@ -28,7 +28,7 @@ If no proper versioned release exists yet, use **Option B to build from source**
    tar -xzf rutree2-android-arm64.tar.gz
    
    # OR for ARMv7 devices (older phones)
-   curl -L -f -o rutree2-android-armv7.tar.gz \
+   wget -O rutree2-android-armv7.tar.gz \
      "https://github.com/npequeux/rutree2/releases/download/${VERSION}/rutree2-android-armv7.tar.gz" || \
      { echo "Error: Download failed for version ${VERSION}."; \
        echo "Please check https://github.com/npequeux/rutree2/releases for available versions"; \
@@ -163,7 +163,7 @@ Once installed, try these commands:
 
 ## Troubleshooting
 
-**"curl: (22) The requested URL returned error: 404" or "Download failed":**
+**"Download failed" or 404 error:**
 - **Cause:** No versioned release has been created yet, or the version number is incorrect
 - **Solution:** 
   1. Visit https://github.com/npequeux/rutree2/releases to see all available releases

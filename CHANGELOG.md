@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-11
+
+### Changed
+- Update Cargo.lock to match version 1.0.1 in Cargo.toml ([84aa927](https://github.com/npequeux/rutree2/commit/84aa92786ca2f9134f2d30c42149a6f0b7f238e8))
+
 ## [1.0.1] - 2026-02-11
 
 ### Changed
