@@ -420,9 +420,11 @@ mod tests {
     fn test_validate_color_invalid_value() {
         let result = validate_color("invalid");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .contains("must be one of: auto, always, never"));
+        assert!(
+            result
+                .unwrap_err()
+                .contains("must be one of: auto, always, never")
+        );
     }
 
     #[test]
