@@ -153,6 +153,7 @@ fn display_tree(
     current_depth: usize,
 ) -> std::io::Result<()> {
     // Check if we've reached max depth
+    #[allow(clippy::collapsible_if)]
     if let Some(max) = max_depth {
         if current_depth > max {
             return Ok(());
@@ -175,6 +176,7 @@ fn display_tree(
             .filter_map(Result::ok)
             .filter(|entry| {
                 // Filter hidden files if needed
+                #[allow(clippy::collapsible_if)]
                 if !show_hidden {
                     if let Some(name) = entry.file_name().to_str() {
                         return !name.starts_with('.');
@@ -193,9 +195,9 @@ fn display_tree(
             let is_last = index == total - 1;
 
             let (connector, new_prefix) = if is_last {
-                (TREE_LAST, format!("{}{}", prefix, TREE_SPACE))
+                ("└── ", format!("{}    ", prefix))
             } else {
-                (TREE_BRANCH, format!("{}{}", prefix, TREE_VERTICAL))
+                ("├── ", format!("{}│   ", prefix))
             };
 
             let name = entry.file_name();
