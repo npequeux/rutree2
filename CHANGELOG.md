@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-17
+
+### Changed
+- Merge pull request #93 from npequeux/copilot/test-fix-all-actions ([89e6225](https://github.com/npequeux/rutree2/commit/89e62250c085ff45ec50c5424d984d3fb16feff7))
+
 ## [1.3.0] - 2026-02-17
 
 ### Changed
