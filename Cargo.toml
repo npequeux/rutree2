@@ -1,7 +1,7 @@
 [package]
 name = "rutree2"
-version = "1.1.1"
-edition = "2021"
+version = "1.1.2"
+edition = "2024"
 description = "A Rust command-line tool inspired by lstree for displaying directory structures in a tree format"
 license = "MIT"
 readme = "README.md"
