@@ -46,6 +46,18 @@ use std::io::IsTerminal;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
+// Unix permission bit constants for file mode checking
+#[cfg(unix)]
+const MODE_STICKY_BIT: u32 = 0o1000; // Sticky bit (e.g., /tmp directories)
+#[cfg(unix)]
+const MODE_SETUID: u32 = 0o4000; // Set user ID on execution
+#[cfg(unix)]
+const MODE_SETGID: u32 = 0o2000; // Set group ID on execution
+#[cfg(unix)]
+const MODE_EXECUTABLE: u32 = 0o111; // User/group/other execute bits
+#[cfg(unix)]
+const MODE_WORLD_WRITABLE: u32 = 0o002; // World writable bit
+
 /// Command-line interface configuration for rutree2
 #[derive(Parser)]
 #[command(name = "rutree2")]
@@ -64,8 +76,19 @@ struct Cli {
     depth: Option<usize>,
 
     /// Use colors to distinguish file types and permissions (auto, always, never)
-    #[arg(short = 'C', long, default_value = "auto")]
+    #[arg(short = 'C', long, default_value = "auto", value_parser = validate_color)]
     color: String,
+}
+
+/// Validates the color argument value
+fn validate_color(s: &str) -> Result<String, String> {
+    match s {
+        "auto" | "always" | "never" => Ok(s.to_string()),
+        _ => Err(format!(
+            "invalid color value '{}', must be one of: auto, always, never",
+            s
+        )),
+    }
 }
 
 /// Main entry point for the rutree2 application.
@@ -89,7 +112,7 @@ fn main() {
     match display_tree(&cli.path, cli.all, cli.depth, "", 0) {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Error: {}", e);
+            eprintln!("Error reading directory '{}': {}", cli.path.display(), e);
             std::process::exit(1);
         }
     }
@@ -124,10 +147,10 @@ fn display_tree(
     current_depth: usize,
 ) -> std::io::Result<()> {
     // Check if we've reached max depth
-    if let Some(max) = max_depth
-        && current_depth > max
-    {
-        return Ok(());
+    if let Some(max) = max_depth {
+        if current_depth > max {
+            return Ok(());
+        }
     }
 
     // Get the file name
@@ -146,8 +169,10 @@ fn display_tree(
             .filter_map(Result::ok)
             .filter(|entry| {
                 // Filter hidden files if needed
-                if !show_hidden && let Some(name) = entry.file_name().to_str() {
-                    return !name.starts_with('.');
+                if !show_hidden {
+                    if let Some(name) = entry.file_name().to_str() {
+                        return !name.starts_with('.');
+                    }
                 }
                 true
             })
@@ -223,6 +248,20 @@ fn display_tree(
 
 /// Colorize a file name based on its metadata (permissions and file type).
 ///
+/// Colors are applied in order of precedence (first match wins):
+/// 1. Symlinks: Cyan
+/// 2. Setuid files: White on red (highest priority - security sensitive)
+/// 3. Setgid files: Black on yellow (high priority - security sensitive)  
+/// 4. Sticky bit directories: Green on blue (e.g., /tmp)
+/// 5. Regular directories: Blue and bold
+/// 6. Special files (devices, sockets, pipes): Yellow bold
+/// 7. World-writable files: Yellow (warning)
+/// 8. Executable files: Green
+/// 9. Archive files: Red (.zip, .tar, .gz, etc.)
+/// 10. Image files: Magenta (.png, .jpg, etc.)
+/// 11. Audio/video files: Bright magenta (.mp3, .mp4, etc.)
+/// 12. Default: No color
+///
 /// # Arguments
 ///
 /// * `name` - The file name to colorize
@@ -230,19 +269,11 @@ fn display_tree(
 ///
 /// # Returns
 ///
-/// A colored string based on file type and permissions:
-/// - Directories: Blue and bold
-/// - Setuid files: White on red (security sensitive)
-/// - Setgid files: Black on yellow (security sensitive)
-/// - Sticky bit directories: Green on blue
-/// - Executable files: Green
-/// - World-writable files: Yellow (warning)
-/// - Symlinks: Cyan
-/// - Archive files: Red
-/// - Image files: Magenta
-/// - Audio/video files: Bright magenta
-/// - Special files (devices, sockets, pipes): Yellow bold
-/// - Default: No color
+/// A colored string based on file type and permissions.
+///
+/// # Note
+///
+/// If metadata cannot be read (e.g., permission denied), the name is returned without coloring.
 fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     // Check if it's a symlink first (using symlink_metadata to avoid following the link)
     if path
@@ -264,8 +295,8 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
         #[cfg(unix)]
         {
             let mode = metadata.permissions().mode();
-            // Check for sticky bit (0o1000) on directories
-            if mode & 0o1000 != 0 {
+            // Check for sticky bit on directories
+            if mode & MODE_STICKY_BIT != 0 {
                 return name.green().on_blue(); // Sticky bit directory (e.g., /tmp)
             }
         }
@@ -277,17 +308,17 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
     {
         let mode = metadata.permissions().mode();
 
-        // Check for setuid bit (0o4000)
-        let is_setuid = mode & 0o4000 != 0;
+        // Check for setuid bit
+        let is_setuid = mode & MODE_SETUID != 0;
 
-        // Check for setgid bit (0o2000)
-        let is_setgid = mode & 0o2000 != 0;
+        // Check for setgid bit
+        let is_setgid = mode & MODE_SETGID != 0;
 
-        // Check if file is executable (0o111 = user/group/other execute bits)
-        let is_executable = mode & 0o111 != 0;
+        // Check if file is executable
+        let is_executable = mode & MODE_EXECUTABLE != 0;
 
-        // Check if file is writable by others (0o002 = other write bit)
-        let is_world_writable = mode & 0o002 != 0;
+        // Check if file is writable by others
+        let is_world_writable = mode & MODE_WORLD_WRITABLE != 0;
 
         // Check for special file types using file_type()
         let file_type = metadata.file_type();
