@@ -613,6 +613,7 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
 }
 
 // Disambiguate colored methods
+#[allow(dead_code)]
 trait ColoredCompat {
     fn colored_cyan(s: &str) -> ColoredString;
     fn colored_green(s: &str) -> ColoredString;
