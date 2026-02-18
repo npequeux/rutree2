@@ -1,0 +1,27 @@
+# Cargo configuration for optimized builds
+
+[build]
+# Enable incremental compilation for faster rebuilds
+incremental = true
+
+[profile.dev]
+# Faster compile times in development
+incremental = true
+# Reduce debug info to speed up compilation
+debug = 1
+
+[profile.release]
+# Optimize for speed
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.test]
+# Optimize test builds for faster execution
+opt-level = 1
+debug = 1
+
+[net]
+# Use sparse registry for faster dependency fetching
+git-fetch-with-cli = true

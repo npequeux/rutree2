@@ -1,6 +1,7 @@
 # rutree2
 
 [![Rust CI](https://github.com/npequeux/rutree2/workflows/Rust%20CI/badge.svg)](https://github.com/npequeux/rutree2/actions/workflows/ci.yml)
+[![Code Coverage](https://codecov.io/gh/npequeux/rutree2/branch/main/graph/badge.svg)](https://codecov.io/gh/npequeux/rutree2)
 [![Documentation](https://github.com/npequeux/rutree2/workflows/Documentation/badge.svg)](https://github.com/npequeux/rutree2/actions/workflows/docs.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

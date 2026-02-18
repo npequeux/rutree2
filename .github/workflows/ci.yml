@@ -35,6 +35,9 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-lint-
+            ${{ runner.os }}-cargo-
 
       - name: Check formatting
         run: cargo fmt -- --check
@@ -53,8 +56,16 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Cache cargo-audit binary
+        uses: actions/cache@v5
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: ${{ runner.os }}-cargo-audit-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-audit-
+
       - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+        run: cargo install cargo-audit --locked || true
 
       - name: Run security audit
         run: cargo audit
@@ -84,6 +95,8 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Run tests
         run: cargo test --verbose
