@@ -242,7 +242,9 @@ fn interactive_tree(
                 }
                 KeyCode::Right | KeyCode::Enter => {
                     let sel = state.selected().unwrap_or(0);
-                    if let Some(node) = get_mut_node(&mut tree, sel) && node.is_dir {
+                    if let Some(node) = get_mut_node(&mut tree, sel)
+                        && node.is_dir
+                    {
                         node.expanded = !node.expanded;
                         flat = tree.flatten();
                         let new_sel = sel.min(flat.len().saturating_sub(1));
@@ -251,7 +253,10 @@ fn interactive_tree(
                 }
                 KeyCode::Left => {
                     let sel = state.selected().unwrap_or(0);
-                    if let Some(node) = get_mut_node(&mut tree, sel) && node.is_dir && node.expanded {
+                    if let Some(node) = get_mut_node(&mut tree, sel)
+                        && node.is_dir
+                        && node.expanded
+                    {
                         node.expanded = false;
                         flat = tree.flatten();
                         let new_sel = sel.min(flat.len().saturating_sub(1));
