@@ -181,7 +181,7 @@ fn interactive_tree(
 
     loop {
         terminal.draw(|f| {
-            let size = f.size();
+            let size = f.area();
             let legend_x = size.x + size.width.saturating_sub(legend_width);
             let legend_y = size.y;
             let legend_area = ratatui::layout::Rect {
@@ -245,18 +245,10 @@ fn interactive_tree(
                         let sel = state.selected().unwrap_or(0);
                         if let Some(node) = get_mut_node(&mut tree, sel) {
                             if node.is_dir {
-                                if !node.expanded {
-                                    node.expanded = true;
-                                    flat = tree.flatten();
-                                    let new_sel = sel.min(flat.len().saturating_sub(1));
-                                    state.select(Some(new_sel));
-                                } else if node.expanded && !node.children.is_empty() {
-                                    // Move selection to first child
-                                    let next = sel + 1;
-                                    if next < flat.len() {
-                                        state.select(Some(next));
-                                    }
-                                }
+                                node.expanded = !node.expanded;
+                                flat = tree.flatten();
+                                let new_sel = sel.min(flat.len().saturating_sub(1));
+                                state.select(Some(new_sel));
                             }
                         }
                     }
@@ -868,29 +860,20 @@ fn get_mut_node<'a>(tree: &'a mut TreeNode, sel: usize) -> Option<&'a mut TreeNo
 // Get the path of child indices from root to the selected node in the flat list
 impl TreeNode {
     fn get_path_to_flat_index(&self, sel: usize) -> Option<Vec<usize>> {
-        let flat = self.flatten();
-        if sel >= flat.len() {
-            return None;
-        }
-        let target = &flat[sel].1;
-        let mut path = vec![];
-        fn find_path<'a>(node: &'a TreeNode, target: &'a TreeNode, path: &mut Vec<usize>) -> bool {
-            if std::ptr::eq(node, target) {
-                return true;
+        // Build flat list with path information
+        let mut flat_with_paths: Vec<Vec<usize>> = vec![];
+        self.flatten_with_paths(&mut flat_with_paths, vec![]);
+        flat_with_paths.get(sel).cloned()
+    }
+
+    fn flatten_with_paths(&self, out: &mut Vec<Vec<usize>>, current_path: Vec<usize>) {
+        out.push(current_path.clone());
+        if self.is_dir && self.expanded {
+            for (i, child) in self.children.iter().enumerate() {
+                let mut child_path = current_path.clone();
+                child_path.push(i);
+                child.flatten_with_paths(out, child_path);
             }
-            for (i, child) in node.children.iter().enumerate() {
-                path.push(i);
-                if find_path(child, target, path) {
-                    return true;
-                }
-                path.pop();
-            }
-            false
-        }
-        if find_path(self, target, &mut path) {
-            Some(path)
-        } else {
-            None
         }
     }
 }
