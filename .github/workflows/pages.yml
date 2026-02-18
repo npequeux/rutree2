@@ -1,9 +1,11 @@
-name: Deploy GitHub Pages
+name: Deploy GitHub Pages (Static Docs)
+
+# This workflow deploys the static docs folder to GitHub Pages
+# Note: The main documentation workflow (docs.yml) handles Rust API docs
+# This workflow is for additional static documentation
 
 on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+  workflow_dispatch:  # Only run manually to avoid conflicts with docs.yml
 
 permissions:
   contents: read
@@ -11,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-static"
   cancel-in-progress: false
 
 jobs:
@@ -25,6 +27,13 @@ jobs:
         id: configure-pages
         uses: actions/configure-pages@v5
         continue-on-error: true
+
+      - name: Check if Pages is enabled
+        if: steps.configure-pages.outcome == 'failure'
+        run: |
+          echo "::warning::GitHub Pages is not enabled for this repository."
+          echo "::warning::Please enable Pages in Settings -> Pages -> Source: GitHub Actions"
+          exit 0
 
       - name: Upload artifact
         if: steps.configure-pages.outcome == 'success'
