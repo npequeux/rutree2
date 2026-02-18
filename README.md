@@ -150,6 +150,7 @@ rutree2 --all --depth 1 /path/to/directory
 - `PATH` - Path to display (defaults to current directory)
 - `-a, --all` - Show hidden files
 - `-d, --depth <DEPTH>` - Maximum depth to traverse
+- `-i, --interactive` - Launch interactive collapsible/expandable tree mode
 - `-C, --color <COLOR>` - Use colors to distinguish file types and permissions (auto, always, never) [default: auto]
 - `-h, --help` - Print help information
 
@@ -192,16 +193,39 @@ In this example, `shortcuts/` is a symbolic link pointing to the `docs` director
 
 rutree2 now supports an interactive, collapsible/expandable tree view in the terminal!
 
-- Use the `-i` or `--interactive` flag to launch the interactive mode:
+### Launching Interactive Mode
+
+Use the `-i` or `--interactive` flag to launch the interactive mode:
 
 ```bash
 rutree2 -i
+
+# With options
+rutree2 -i --all --depth 3 /path/to/directory
 ```
 
-- In interactive mode, you can:
-  - Expand/collapse directories with the arrow keys
-  - Navigate the tree interactively
-  - Quit with `q`
+### Navigation & Controls
+
+In interactive mode, you have full keyboard control over the tree:
+
+- **↑/↓ (Up/Down arrows)** - Navigate up and down through the tree
+- **→ (Right arrow) / Enter** - Expand a collapsed directory or toggle if expanded
+- **← (Left arrow)** - Collapse an expanded directory
+- **q** - Quit interactive mode
+
+### Features
+
+- **Visual Highlighting**: Selected items are highlighted with a yellow background for easy tracking
+- **Legend Overlay**: A helpful legend in the top-right corner shows all available commands
+- **Collapsible Directories**: Directories show `[+]` when collapsed and `[-]` when expanded
+- **Smooth Navigation**: Seamlessly navigate through your directory structure
+- **Preserves Options**: Works with all standard options like `--all`, `--depth`, etc.
+
+### Tips
+
+- Start with the root directory collapsed to get an overview, then expand what you need
+- Use `--depth` to limit initial tree depth for better performance on large directories
+- Combine with `--all` to see hidden files in interactive mode
 
 This feature is powered by the `ratatui` and `crossterm` crates for a modern TUI experience.
 

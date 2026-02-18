@@ -7,9 +7,12 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 ## Features
 
 - Display directory trees with proper indentation and tree characters
+- **Interactive Mode**: Collapsible/expandable tree view with keyboard navigation
+- **Visualize symbolic links** with `->` indicator showing both origin and destination
 - Show hidden files with the `-a` or `--all` flag
 - Limit traversal depth with the `-d` or `--depth` option
 - Sort entries alphabetically
+- **Enhanced color-coded output** based on file types and permissions
 - Clean, readable output with visual tree structure
 
 ## Installation
@@ -97,15 +100,35 @@ rutree2 --all
 # Limit depth to 2 levels
 rutree2 --depth 2
 
+# Interactive mode
+rutree2 -i
+
 # Combine options
 rutree2 --all --depth 1 /path/to/directory
 ```
+
+## Interactive Mode
+
+Launch interactive mode with the `-i` flag for a collapsible/expandable tree view:
+
+```bash
+rutree2 -i
+```
+
+**Controls:**
+- **↑/↓** - Navigate up/down
+- **→/Enter** - Expand directory or toggle
+- **←** - Collapse directory
+- **q** - Quit
+
+Features visual highlighting, on-screen legend, and works with all standard options.
 
 ## Options
 
 - `PATH` - Path to display (defaults to current directory)
 - `-a, --all` - Show hidden files
 - `-d, --depth <DEPTH>` - Maximum depth to traverse
+- `-i, --interactive` - Launch interactive collapsible/expandable tree mode
 - `-h, --help` - Print help information
 
 ## Example Output

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-02-18
+
+### Added
+- **Interactive Mode**: New `-i` / `--interactive` flag for collapsible/expandable tree navigation
+  - Navigate with arrow keys (↑/↓/←/→)
+  - Expand/collapse directories with Enter or right arrow
+  - Collapse with left arrow
+  - Visual selection highlighting with yellow background
+  - On-screen legend overlay showing all keyboard shortcuts
+  - Seamless integration with existing options (--all, --depth, etc.)
+- Enhanced tree visualization with `[+]` and `[-]` indicators for collapsed/expanded state
+
+### Changed
+- Updated to use `ratatui` 0.30.0 for modern TUI rendering
+- Fixed deprecated API usage (changed `size()` to `area()` in ratatui)
+- Improved tree flattening algorithm to properly track node paths for interactive mutation
+- Major version bump to 2.0.0 to reflect significant new interactive feature
+
+### Technical
+- Added `crossterm` for terminal control in interactive mode
+- Implemented efficient path-based node tracking for expand/collapse operations
+- Enhanced TreeNode structure with expansion state and proper reference handling
+
 ## [1.7.0] - 2026-02-18
 
 ### Changed
