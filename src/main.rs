@@ -39,7 +39,7 @@
 //! ```
 
 use clap::Parser;
-use colored::{Colorize as ColoredColorize, ColoredString};
+use colored::{ColoredString, Colorize as ColoredColorize};
 use std::fs;
 use std::io::IsTerminal;
 #[cfg(unix)]
@@ -47,10 +47,10 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 // For interactive mode
+use crossterm::event::{self, Event, KeyCode};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
-use crossterm::event::{self, Event, KeyCode};
-use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use std::time::Duration;
 // Tree drawing constants for interactive mode
 const TREE_LAST: &str = "└── ";
@@ -91,7 +91,11 @@ struct Cli {
     color: String,
 
     /// Interactive collapsible/expandable tree view
-    #[arg(short = 'i', long, help = "Interactive collapsible/expandable tree view")]
+    #[arg(
+        short = 'i',
+        long,
+        help = "Interactive collapsible/expandable tree view"
+    )]
     interactive: bool,
 }
 
@@ -142,13 +146,16 @@ fn main() {
                 eprintln!("Error reading directory '{}': {}", cli.path.display(), e);
                 std::process::exit(1);
             }
-            }
         }
     }
-
+}
 
 /// Interactive collapsible/expandable tree using ratatui
-fn interactive_tree(path: &Path, show_hidden: bool, max_depth: Option<usize>) -> std::io::Result<()> {
+fn interactive_tree(
+    path: &Path,
+    show_hidden: bool,
+    max_depth: Option<usize>,
+) -> std::io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
     crossterm::execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
@@ -165,16 +172,23 @@ fn interactive_tree(path: &Path, show_hidden: bool, max_depth: Option<usize>) ->
     loop {
         terminal.draw(|f| {
             let size = f.area();
-            let items: Vec<ListItem> = flat.iter().map(|(prefix, node)| {
-                let mut label = format!("{}{}", prefix, node.display_name());
-                if node.is_dir && !node.expanded {
-                    label.push_str(" [+]");
-                } else if node.is_dir && node.expanded {
-                    label.push_str(" [-]");
-                }
-                ListItem::new(label)
-            }).collect();
-            let list = List::new(items).block(Block::default().borders(Borders::ALL).title("rutree2 (interactive)"));
+            let items: Vec<ListItem> = flat
+                .iter()
+                .map(|(prefix, node)| {
+                    let mut label = format!("{}{}", prefix, node.display_name());
+                    if node.is_dir && !node.expanded {
+                        label.push_str(" [+]");
+                    } else if node.is_dir && node.expanded {
+                        label.push_str(" [-]");
+                    }
+                    ListItem::new(label)
+                })
+                .collect();
+            let list = List::new(items).block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("rutree2 (interactive)"),
+            );
             f.render_stateful_widget(list, size, &mut state);
         })?;
 
@@ -236,8 +250,17 @@ struct TreeNode {
 }
 
 impl TreeNode {
-    fn from_path(path: &Path, show_hidden: bool, max_depth: Option<usize>, depth: usize) -> std::io::Result<Self> {
-        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or(".").to_string();
+    fn from_path(
+        path: &Path,
+        show_hidden: bool,
+        max_depth: Option<usize>,
+        depth: usize,
+    ) -> std::io::Result<Self> {
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(".")
+            .to_string();
         let is_dir = path.is_dir();
         let mut node = TreeNode {
             name,
@@ -484,8 +507,8 @@ fn colorize_filename(name: &str, path: &Path) -> ColoredString {
         return <&str as ColoredCompat>::colored_blue(name).bold();
     }
 
-
-    #[cfg(unix)] {
+    #[cfg(unix)]
+    {
         let mode = metadata.permissions().mode();
         // Check for setuid bit
         let is_setuid = mode & MODE_SETUID != 0;
@@ -568,15 +591,33 @@ trait ColoredCompat {
 }
 
 impl ColoredCompat for &str {
-    fn colored_cyan(s: &str) -> ColoredString { colored::Colorize::cyan(s) }
-    fn colored_green(s: &str) -> ColoredString { colored::Colorize::green(s) }
-    fn colored_blue(s: &str) -> ColoredString { colored::Colorize::blue(s) }
-    fn colored_yellow(s: &str) -> ColoredString { colored::Colorize::yellow(s) }
-    fn colored_white(s: &str) -> ColoredString { colored::Colorize::white(s) }
-    fn colored_black(s: &str) -> ColoredString { colored::Colorize::black(s) }
-    fn colored_red(s: &str) -> ColoredString { colored::Colorize::red(s) }
-    fn colored_magenta(s: &str) -> ColoredString { colored::Colorize::magenta(s) }
-    fn colored_bright_magenta(s: &str) -> ColoredString { colored::Colorize::bright_magenta(s) }
+    fn colored_cyan(s: &str) -> ColoredString {
+        colored::Colorize::cyan(s)
+    }
+    fn colored_green(s: &str) -> ColoredString {
+        colored::Colorize::green(s)
+    }
+    fn colored_blue(s: &str) -> ColoredString {
+        colored::Colorize::blue(s)
+    }
+    fn colored_yellow(s: &str) -> ColoredString {
+        colored::Colorize::yellow(s)
+    }
+    fn colored_white(s: &str) -> ColoredString {
+        colored::Colorize::white(s)
+    }
+    fn colored_black(s: &str) -> ColoredString {
+        colored::Colorize::black(s)
+    }
+    fn colored_red(s: &str) -> ColoredString {
+        colored::Colorize::red(s)
+    }
+    fn colored_magenta(s: &str) -> ColoredString {
+        colored::Colorize::magenta(s)
+    }
+    fn colored_bright_magenta(s: &str) -> ColoredString {
+        colored::Colorize::bright_magenta(s)
+    }
 }
 
 #[cfg(test)]
