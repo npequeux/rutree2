@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-02-18
+
+### Changed
+- feat: add code coverage with optimized CI/CD ([0eb1996](https://github.com/npequeux/rutree2/commit/0eb19965623ea9554c76671ca42d41a949a0a3e2))
+
 ## [2.4.0] - 2026-02-18
 
 ### Changed
