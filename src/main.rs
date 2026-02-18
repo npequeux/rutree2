@@ -51,7 +51,7 @@ use crossterm::event::{self, Event, KeyCode};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
-use std::time::Duration;
+
 // Tree drawing constants for interactive mode
 const TREE_LAST: &str = "└── ";
 const TREE_BRANCH: &str = "├── ";
@@ -227,44 +227,38 @@ fn interactive_tree(
             f.render_widget(legend, legend_area);
         })?;
 
-        if event::poll(Duration::from_millis(200))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Down => {
-                        let sel = state.selected().unwrap_or(0);
-                        let new_sel = if sel + 1 < flat.len() { sel + 1 } else { sel };
-                        state.select(Some(new_sel));
-                    }
-                    KeyCode::Up => {
-                        let sel = state.selected().unwrap_or(0);
-                        let new_sel = if sel > 0 { sel - 1 } else { 0 };
-                        state.select(Some(new_sel));
-                    }
-                    KeyCode::Right | KeyCode::Enter => {
-                        let sel = state.selected().unwrap_or(0);
-                        if let Some(node) = get_mut_node(&mut tree, sel) {
-                            if node.is_dir {
-                                node.expanded = !node.expanded;
-                                flat = tree.flatten();
-                                let new_sel = sel.min(flat.len().saturating_sub(1));
-                                state.select(Some(new_sel));
-                            }
-                        }
-                    }
-                    KeyCode::Left => {
-                        let sel = state.selected().unwrap_or(0);
-                        if let Some(node) = get_mut_node(&mut tree, sel) {
-                            if node.is_dir && node.expanded {
-                                node.expanded = false;
-                                flat = tree.flatten();
-                                let new_sel = sel.min(flat.len().saturating_sub(1));
-                                state.select(Some(new_sel));
-                            }
-                        }
-                    }
-                    _ => {}
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Char('q') => break,
+                KeyCode::Down => {
+                    let sel = state.selected().unwrap_or(0);
+                    let new_sel = if sel + 1 < flat.len() { sel + 1 } else { sel };
+                    state.select(Some(new_sel));
                 }
+                KeyCode::Up => {
+                    let sel = state.selected().unwrap_or(0);
+                    let new_sel = if sel > 0 { sel - 1 } else { 0 };
+                    state.select(Some(new_sel));
+                }
+                KeyCode::Right | KeyCode::Enter => {
+                    let sel = state.selected().unwrap_or(0);
+                    if let Some(node) = get_mut_node(&mut tree, sel) && node.is_dir {
+                        node.expanded = !node.expanded;
+                        flat = tree.flatten();
+                        let new_sel = sel.min(flat.len().saturating_sub(1));
+                        state.select(Some(new_sel));
+                    }
+                }
+                KeyCode::Left => {
+                    let sel = state.selected().unwrap_or(0);
+                    if let Some(node) = get_mut_node(&mut tree, sel) && node.is_dir && node.expanded {
+                        node.expanded = false;
+                        flat = tree.flatten();
+                        let new_sel = sel.min(flat.len().saturating_sub(1));
+                        state.select(Some(new_sel));
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -304,14 +298,12 @@ impl TreeNode {
             children: vec![],
             depth,
         };
-        if is_dir && (max_depth.map_or(true, |m| depth < m)) {
+        if is_dir && max_depth.is_none_or(|m| depth < m) {
             let mut entries: Vec<_> = fs::read_dir(path)?
                 .filter_map(Result::ok)
                 .filter(|entry| {
-                    if !show_hidden {
-                        if let Some(name) = entry.file_name().to_str() {
-                            return !name.starts_with('.');
-                        }
+                    if !show_hidden && let Some(name) = entry.file_name().to_str() {
+                        return !name.starts_with('.');
                     }
                     true
                 })
@@ -656,6 +648,37 @@ impl ColoredCompat for &str {
     }
 }
 
+// Helper to get mutable reference to the selected node in the real tree using path indices
+fn get_mut_node(tree: &mut TreeNode, sel: usize) -> Option<&mut TreeNode> {
+    let path = tree.get_path_to_flat_index(sel)?;
+    let mut node = tree;
+    for idx in path {
+        node = node.children.get_mut(idx)?;
+    }
+    Some(node)
+}
+
+// Get the path of child indices from root to the selected node in the flat list
+impl TreeNode {
+    fn get_path_to_flat_index(&self, sel: usize) -> Option<Vec<usize>> {
+        // Build flat list with path information
+        let mut flat_with_paths: Vec<Vec<usize>> = vec![];
+        self.flatten_with_paths(&mut flat_with_paths, vec![]);
+        flat_with_paths.get(sel).cloned()
+    }
+
+    fn flatten_with_paths(&self, out: &mut Vec<Vec<usize>>, current_path: Vec<usize>) {
+        out.push(current_path.clone());
+        if self.is_dir && self.expanded {
+            for (i, child) in self.children.iter().enumerate() {
+                let mut child_path = current_path.clone();
+                child_path.push(i);
+                child.flatten_with_paths(out, child_path);
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -845,36 +868,5 @@ mod tests {
         assert_eq!(MODE_SETGID, 0o2000);
         assert_eq!(MODE_EXECUTABLE, 0o111);
         assert_eq!(MODE_WORLD_WRITABLE, 0o002);
-    }
-}
-
-// Helper to get mutable reference to the selected node in the real tree using path indices
-fn get_mut_node<'a>(tree: &'a mut TreeNode, sel: usize) -> Option<&'a mut TreeNode> {
-    let path = tree.get_path_to_flat_index(sel)?;
-    let mut node = tree;
-    for idx in path {
-        node = node.children.get_mut(idx)?;
-    }
-    Some(node)
-}
-
-// Get the path of child indices from root to the selected node in the flat list
-impl TreeNode {
-    fn get_path_to_flat_index(&self, sel: usize) -> Option<Vec<usize>> {
-        // Build flat list with path information
-        let mut flat_with_paths: Vec<Vec<usize>> = vec![];
-        self.flatten_with_paths(&mut flat_with_paths, vec![]);
-        flat_with_paths.get(sel).cloned()
-    }
-
-    fn flatten_with_paths(&self, out: &mut Vec<Vec<usize>>, current_path: Vec<usize>) {
-        out.push(current_path.clone());
-        if self.is_dir && self.expanded {
-            for (i, child) in self.children.iter().enumerate() {
-                let mut child_path = current_path.clone();
-                child_path.push(i);
-                child.flatten_with_paths(out, child_path);
-            }
-        }
     }
 }
