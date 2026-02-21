@@ -1,22 +1,31 @@
 //! # rutree2
 //!
-//! A Rust command-line tool for displaying directory structures in a tree format.
+//! A Rust command-line tool inspired by `lstree` for displaying directory structures in a tree format.
+//!
+//! **Requires Rust 1.93.0 or later** (uses Rust 2024 edition features)
 //!
 //! ## Features
 //!
 //! - Display directory trees with proper indentation and tree characters
-//! - Visualize symbolic links with `->` indicator showing both origin and destination
+//! - **Visualize symbolic links** with `->` indicator showing both origin and destination
 //! - Show hidden files with the `-a` or `--all` flag
 //! - Limit traversal depth with the `-d` or `--depth` option
 //! - Sort entries alphabetically
-//! - Enhanced color-coded output based on file types and permissions:
-//!   - Setuid/setgid files (security sensitive)
-//!   - Sticky bit directories
-//!   - Executable files
-//!   - World-writable files
-//!   - Directories and symbolic links
-//!   - Archive, image, and audio/video files
-//!   - Special files (devices, sockets, pipes)
+//! - **Interactive collapsible/expandable tree mode** with `-i` or `--interactive` flag
+//! - **Enhanced color-coded output** based on file types and permissions:
+//!   - **Permissions-based coloring:**
+//!     - Setuid files: White on red background (security sensitive)
+//!     - Setgid files: Black on yellow background (security sensitive)
+//!     - Sticky bit directories: Green on blue background (e.g., `/tmp`)
+//!     - Executable files: Green
+//!     - World-writable files: Yellow (warning)
+//!   - **File type coloring:**
+//!     - Directories: Blue (bold)
+//!     - Symbolic links: Cyan
+//!     - Archive files (zip, tar, gz, etc.): Red
+//!     - Image files (png, jpg, svg, etc.): Magenta
+//!     - Audio/video files (mp3, mp4, mkv, etc.): Bright magenta
+//!     - Special files (devices, sockets, pipes): Yellow (bold)
 //! - Clean, readable output with visual tree structure
 //!
 //! ## Usage
@@ -34,8 +43,14 @@
 //! # Limit depth to 2 levels
 //! rutree2 --depth 2
 //!
-//! # Always use colors
+//! # Control color output (auto, always, never)
 //! rutree2 --color always
+//!
+//! # Interactive collapsible/expandable tree view
+//! rutree2 --interactive
+//!
+//! # Combine options
+//! rutree2 --all --depth 3 --interactive /path/to/directory
 //! ```
 
 use clap::Parser;
