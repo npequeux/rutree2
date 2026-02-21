@@ -4,6 +4,10 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 
 **Now with Android support!** 📱 See [ANDROID.md](ANDROID.md) for build and installation instructions.
 
+## Requirements
+
+**Requires Rust 1.93.0 or later** - This project uses Rust 2024 edition features (let chains, `is_none_or`, etc.)
+
 ## Features
 
 - Display directory trees with proper indentation and tree characters
@@ -12,7 +16,20 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 - Show hidden files with the `-a` or `--all` flag
 - Limit traversal depth with the `-d` or `--depth` option
 - Sort entries alphabetically
-- **Enhanced color-coded output** based on file types and permissions
+- **Enhanced color-coded output** based on file types and permissions:
+  - **Permissions-based coloring:**
+    - Setuid files: White on red background (security sensitive)
+    - Setgid files: Black on yellow background (security sensitive)
+    - Sticky bit directories: Green on blue background (e.g., `/tmp`)
+    - Executable files: Green
+    - World-writable files: Yellow (warning)
+  - **File type coloring:**
+    - Directories: Blue (bold)
+    - Symbolic links: Cyan
+    - Archive files (zip, tar, gz, etc.): Red
+    - Image files (png, jpg, svg, etc.): Magenta
+    - Audio/video files (mp3, mp4, mkv, etc.): Bright magenta
+    - Special files (devices, sockets, pipes): Yellow (bold)
 - Clean, readable output with visual tree structure
 
 ## Installation
@@ -29,8 +46,13 @@ Available platforms:
 - **Linux** (x86_64): `rutree2-linux-x86_64.tar.gz`
 - **macOS** (x86_64 Intel): `rutree2-macos-x86_64.tar.gz`
 - **macOS** (ARM64 Apple Silicon): `rutree2-macos-arm64.tar.gz`
+- **Android** (ARM64): `rutree2-android-arm64.tar.gz`
+- **Android** (ARMv7): `rutree2-android-armv7.tar.gz`
 
 ### Build from Source
+
+**Requirements:**
+- Rust 1.93.0 or later (uses Rust 2024 edition features)
 
 ```bash
 cargo build --release
@@ -52,9 +74,17 @@ CI builds are created for:
 
 ### Android Builds
 
-For Android devices, see [ANDROID.md](ANDROID.md) for detailed build and installation instructions.
+**Pre-built Android binaries are now available in releases!** Download them directly from the [latest release](https://github.com/npequeux/rutree2/releases/latest).
 
-After building for Android, binaries are available at:
+> **Note:** If you encounter a 404 error when downloading, it means no release has been published yet. In that case, please build from source using the instructions in [QUICKSTART-ANDROID.md](QUICKSTART-ANDROID.md) Option B or [ANDROID.md](ANDROID.md).
+
+For detailed Android installation instructions, see [QUICKSTART-ANDROID.md](QUICKSTART-ANDROID.md) for the quickest setup, or [ANDROID.md](ANDROID.md) for comprehensive build and installation instructions.
+
+Available Android binaries in releases:
+- ARM64 (most modern devices): `rutree2-android-arm64.tar.gz`
+- ARMv7 (older devices): `rutree2-android-armv7.tar.gz`
+
+If you prefer to build from source, binaries are available at:
 - ARM64 (most modern devices): `target/aarch64-linux-android/release/rutree2`
 - ARMv7 (older devices): `target/armv7-linux-androideabi/release/rutree2`
 - x86_64 (emulators): `target/x86_64-linux-android/release/rutree2`
@@ -72,9 +102,13 @@ Available tasks:
 - `cargo make format` - Format code using rustfmt
 - `cargo make check` - Check code without building
 - `cargo make clippy` - Run clippy linter
+- `cargo make lint` - Run all linting tasks (format + clippy)
 - `cargo make build` - Build the project (runs format first)
 - `cargo make build-release` - Build in release mode (runs format first)
 - `cargo make test` - Run tests (runs format first)
+- `cargo make doc` - Generate documentation
+- `cargo make doc-open` - Generate and open documentation in browser
+- `cargo make audit` - Run security audit (requires cargo-audit)
 - `cargo make clean` - Clean build artifacts
 - `cargo make all` - Run all tasks: format, check, clippy, build, and test
 
@@ -99,6 +133,9 @@ rutree2 --all
 
 # Limit depth to 2 levels
 rutree2 --depth 2
+
+# Control color output
+rutree2 --color always
 
 # Interactive mode
 rutree2 -i
@@ -129,6 +166,7 @@ Features visual highlighting, on-screen legend, and works with all standard opti
 - `-a, --all` - Show hidden files
 - `-d, --depth <DEPTH>` - Maximum depth to traverse
 - `-i, --interactive` - Launch interactive collapsible/expandable tree mode
+- `-C, --color <COLOR>` - Use colors to distinguish file types and permissions (auto, always, never) [default: auto]
 - `-h, --help` - Print help information
 
 ## Example Output

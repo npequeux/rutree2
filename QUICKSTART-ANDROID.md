@@ -2,6 +2,8 @@
 
 This guide will get you started testing `rutree2` on your Android phone in just a few minutes.
 
+**Requirements:** This project requires Rust 1.93.0 or later to build (uses Rust 2024 edition features).
+
 ## Option A: Download Pre-built Binary (Easiest)
 
 **⚠️ IMPORTANT:** Before using this option, verify that a proper release with Android binaries exists:

@@ -9,6 +9,10 @@ A Rust command-line tool inspired by `lstree` for displaying directory structure
 
 **Now with Android support!** 📱 See [ANDROID.md](ANDROID.md) for build and installation instructions.
 
+## Requirements
+
+**Requires Rust 1.93.0 or later** - This project uses Rust 2024 edition features (let chains, `is_none_or`, etc.)
+
 ## Documentation
 
 - [API Documentation](https://npequeux.github.io/rutree2/) - Rust API documentation (auto-generated)
