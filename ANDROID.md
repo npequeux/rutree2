@@ -4,9 +4,10 @@ This document explains how to build and use `rutree2` on Android devices.
 
 ## Prerequisites
 
-1. **Android NDK** - Download from [Android Developer site](https://developer.android.com/ndk/downloads)
-2. **cargo-ndk** - Install with: `cargo install cargo-ndk`
-3. **Android targets for Rust** - Install with: `cargo make install-android-targets`
+1. **Rust 1.93.0 or later** - Required for Rust 2024 edition features
+2. **Android NDK** - Download from [Android Developer site](https://developer.android.com/ndk/downloads)
+3. **cargo-ndk** - Install with: `cargo install cargo-ndk`
+4. **Android targets for Rust** - Install with: `cargo make install-android-targets`
 
 ## Building for Android
 
