@@ -10,7 +10,7 @@ homepage = "https://npequeux.github.io/rutree2"
 
 [dependencies]
 
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.6", features = ["derive"] }
 colored = "3.1"
 crossterm = "0.29.0"
 ratatui = "0.30.0"
