@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.7.0] - 2026-02-21
 
 ### Changed
-- Version bump for new release generation
+- Merge pull request #97 from npequeux/copilot/update-all-docs ([6255f36](https://github.com/npequeux/rutree2/commit/6255f3659d0301a0d6bbccda7605ea1132716510))
 
 ## [2.6.0] - 2026-02-18
 
